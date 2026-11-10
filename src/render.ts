@@ -1,28 +1,19 @@
-import type { es } from './content/es'
-
-type Contenido = typeof es
+// Genera el HTML de la página a partir del contenido de un idioma (es.ts o en.ts).
+// Todos los enlaces a archivos de public/ y al otro idioma llevan el prefijo `raiz`,
+// porque con base './' la página en español vive una carpeta más abajo (/es/).
+import type { Contenido, ClaveSeccion } from './content/tipos'
 
 export interface Opciones {
   /** Indica si un archivo de /public existe (para usar la captura real o el placeholder). */
   existe?: (ruta: string) => boolean
+  /** Prefijo para llegar a la raíz del sitio desde esta página: '' en inglés, '../' en español. */
+  raiz?: string
 }
-
-interface ItemSistema { nombre: string; resultado: string; detalle: string; stack: readonly string[]; captura: string }
-interface ItemIA { nombre: string; texto: string; enlace?: string; contador?: number }
-interface ItemProyecto { nombre: string; texto: string; demo?: string; repo?: string }
 
 const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
 const e = (s: string | number): string => String(s).replace(/[&<>"']/g, (c) => ESC[c])
 
-export const CV_RUTA = 'cv/Juan-Nicolas-Garcia-CV.pdf'
-
-const SECCIONES = ['sistemas', 'tecnologias', 'ia', 'comunidad', 'proyectos', 'ensenanza', 'trayectoria', 'contacto'] as const
-type Seccion = (typeof SECCIONES)[number]
-const NAV: Record<Seccion, string> = {
-  sistemas: 'Sistemas', tecnologias: 'Tecnologías', ia: 'IA', comunidad: 'Comunidad',
-  proyectos: 'Proyectos', ensenanza: 'Enseñanza', trayectoria: 'Trayectoria', contacto: 'Contacto',
-}
-const NAV_HEADER: readonly Seccion[] = ['sistemas', 'ia', 'comunidad', 'proyectos', 'contacto']
+const NAV_HEADER: readonly ClaveSeccion[] = ['sistemas', 'ia', 'comunidad', 'proyectos', 'contacto']
 
 const ICONO_TEMA =
   '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>'
@@ -43,21 +34,31 @@ function ilustracion(): string {
 </svg>`
 }
 
-function cabecera(): string {
-  const enlaces = NAV_HEADER.map((k) => `<a href="#${k}">${e(NAV[k])}</a>`).join('')
-  return `<a class="skip" href="#contenido">Saltar al contenido</a>
-<header class="top">
-  <a class="brand" href="#inicio">Juan Nicolás García</a>
-  <nav aria-label="Secciones">${enlaces}</nav>
-  <div class="top-actions">
-    <a class="btn btn-sm cv-top" href="${CV_RUTA}" download>${ICONO_DESCARGA}<span>Descargar CV</span></a>
-    <button type="button" class="icon-btn" id="tema" aria-label="Cambiar tema claro u oscuro">${ICONO_TEMA}</button>
-  </div>
-</header>
-<a class="btn cv-fab" href="${CV_RUTA}" download>${ICONO_DESCARGA}<span>Descargar CV</span></a>`
+/** Enlace secundario (texto sutil) al CV en el otro idioma. */
+function cvOtro(c: Contenido, raiz: string): string {
+  const { texto, archivo } = c.ui.cvOtro
+  return `<a class="lnk cv-alt" href="${raiz}${archivo}" download>${e(texto)}</a>`
 }
 
-function inicio(c: Contenido['inicio']): string {
+function cabecera(c: Contenido, raiz: string): string {
+  const u = c.ui
+  const enlaces = NAV_HEADER.map((k) => `<a href="#${k}">${e(u.nav[k])}</a>`).join('')
+  const cv = `${raiz}${u.cvPropio}`
+  return `<a class="skip" href="#contenido">${e(u.saltar)}</a>
+<header class="top">
+  <a class="brand" href="#inicio">${e(c.inicio.nombre)}</a>
+  <nav aria-label="${e(u.navAria)}">${enlaces}</nav>
+  <div class="top-actions">
+    <a class="btn btn-sm cv-top" href="${cv}" download>${ICONO_DESCARGA}<span>${e(u.descargarCv)}</span></a>
+    <a class="lang-switch" id="idioma" href="${raiz}${u.idioma.ruta}" hreflang="${u.idioma.lang}" lang="${u.idioma.lang}" aria-label="${e(u.idioma.aria)}">${e(u.idioma.texto)}</a>
+    <button type="button" class="icon-btn" id="tema" aria-label="${e(u.temaAria)}">${ICONO_TEMA}</button>
+  </div>
+</header>
+<div class="cv-fab"><a class="btn" href="${cv}" download>${ICONO_DESCARGA}<span>${e(u.descargarCv)}</span></a>${cvOtro(c, raiz)}</div>`
+}
+
+function inicio(cc: Contenido, raiz: string): string {
+  const c = cc.inicio
   const partes = c.nombre.split(' ')
   const apellido = partes.slice(-1)[0]
   const resto = partes.slice(0, -1).join(' ')
@@ -70,20 +71,21 @@ function inicio(c: Contenido['inicio']): string {
   <p class="lead rv">${e(c.frase)}</p>
   <p class="loc rv">${e(c.ubicacion)}</p>
   <ul class="cifras rv">${cifras}</ul>
-  <p class="botones rv"><a class="btn" href="${CV_RUTA}" download>${e(c.botones.cv)}</a><a class="btn btn-ghost" href="#contacto">${e(c.botones.contacto)}</a></p>
+  <p class="botones rv"><a class="btn" href="${raiz}${cc.ui.cvPropio}" download>${e(c.botones.cv)}</a><a class="btn btn-ghost" href="#contacto">${e(c.botones.contacto)}</a>${cvOtro(cc, raiz)}</p>
   <p class="pista rv">${e(c.pista)}</p>
 </section>`
 }
 
-function sistemas(c: Contenido['sistemas'], o: Opciones): string {
-  const items = (c.items as readonly ItemSistema[])
+function sistemas(c: Contenido['sistemas'], u: Contenido['ui'], o: Opciones): string {
+  const raiz = o.raiz ?? ''
+  const items = c.items
     .map((it) => {
       const base = it.captura.replace(/\.[a-z0-9]+$/i, '')
       const real = `capturas/${it.captura}`
-      const src = o.existe?.(real) ? real : `capturas/placeholder-${base}.svg`
+      const src = raiz + (o.existe?.(real) ? real : `capturas/placeholder-${base}.svg`)
       const chips = it.stack.map((s) => `<li>${e(s)}</li>`).join('')
-      return `<li class="card rv"><img src="${e(src)}" width="1600" height="1000" loading="lazy" alt="Captura de ${e(it.nombre)}" />
-  <div class="card-body"><h3>${e(it.nombre)}</h3><p class="res"><strong>${e(it.resultado)}</strong></p><p>${e(it.detalle)}</p><ul class="chips" aria-label="Tecnologías">${chips}</ul></div></li>`
+      return `<li class="card rv"><img src="${e(src)}" width="1600" height="1000" loading="lazy" alt="${e(u.capturaDe)} ${e(it.nombre)}" />
+  <div class="card-body"><h3>${e(it.nombre)}</h3><p class="res"><strong>${e(it.resultado)}</strong></p><p>${e(it.detalle)}</p><ul class="chips" aria-label="${e(u.tecnologiasAria)}">${chips}</ul></div></li>`
     })
     .join('')
   return `<section id="sistemas" data-pieza="${c.pieza}" aria-labelledby="t-sistemas">
@@ -108,15 +110,15 @@ function tecnologias(c: Contenido['tecnologias']): string {
 </section>`
 }
 
-function ia(c: Contenido['ia']): string {
-  const items = (c.items as readonly ItemIA[])
+function ia(c: Contenido['ia'], u: Contenido['ui']): string {
+  const items = c.items
     .map((it) => {
       const num =
         it.contador !== undefined
-          ? `<p class="big acc" aria-hidden="true"><span data-count="${it.contador}">${it.contador}</span> %</p>`
+          ? `<p class="big acc" aria-hidden="true"><span data-count="${it.contador}">${it.contador}</span>${e(u.pct)}</p>`
           : ''
       const enlace = it.enlace
-        ? `<p><a class="lnk" href="${e(it.enlace)}" target="_blank" rel="noopener">Ver en GitHub<span class="sr"> (se abre en pestaña nueva)</span></a></p>`
+        ? `<p><a class="lnk" href="${e(it.enlace)}" target="_blank" rel="noopener">${e(u.verGithub)}<span class="sr"> ${e(u.pestana)}</span></a></p>`
         : ''
       return `<li class="card card-txt rv">${num}<h3>${e(it.nombre)}</h3><p>${e(it.texto)}</p>${enlace}</li>`
     })
@@ -127,7 +129,7 @@ function ia(c: Contenido['ia']): string {
 </section>`
 }
 
-function comunidad(c: Contenido['comunidad']): string {
+function comunidad(c: Contenido['comunidad'], u: Contenido['ui']): string {
   const logros = c.logros
     .map((l) => `<li class="card card-txt rv"><p class="big acc">${e(l.valor)}</p><p>${e(l.texto)}</p></li>`)
     .join('')
@@ -136,17 +138,17 @@ function comunidad(c: Contenido['comunidad']): string {
   <h2 id="t-comunidad" class="rv">${e(c.titulo)}</h2>
   <p class="rol rv">${e(c.rol)}</p>
   <ul class="cards cards-2">${logros}</ul>
-  <h3 class="rv">Charlas y talleres</h3>
+  <h3 class="rv">${e(u.charlas)}</h3>
   <ul class="lista rv">${charlas}</ul>
 </section>`
 }
 
-function proyectos(c: Contenido['proyectos']): string {
-  const items = (c.items as readonly ItemProyecto[])
+function proyectos(c: Contenido['proyectos'], u: Contenido['ui']): string {
+  const items = c.items
     .map((it) => {
       const links = [
-        it.demo ? `<a class="lnk" href="${e(it.demo)}" target="_blank" rel="noopener">Demo<span class="sr"> de ${e(it.nombre)} (pestaña nueva)</span></a>` : '',
-        it.repo ? `<a class="lnk" href="${e(it.repo)}" target="_blank" rel="noopener">Repositorio<span class="sr"> de ${e(it.nombre)} (pestaña nueva)</span></a>` : '',
+        it.demo ? `<a class="lnk" href="${e(it.demo)}" target="_blank" rel="noopener">${e(u.demo)}<span class="sr"> ${e(u.de)} ${e(it.nombre)} ${e(u.pestana)}</span></a>` : '',
+        it.repo ? `<a class="lnk" href="${e(it.repo)}" target="_blank" rel="noopener">${e(u.repositorio)}<span class="sr"> ${e(u.de)} ${e(it.nombre)} ${e(u.pestana)}</span></a>` : '',
       ].join('')
       return `<li class="card card-txt rv"><h3>${e(it.nombre)}</h3><p>${e(it.texto)}</p><p class="links">${links}</p></li>`
     })
@@ -164,48 +166,66 @@ function ensenanza(c: Contenido['ensenanza']): string {
 </section>`
 }
 
-function trayectoria(c: Contenido['trayectoria']): string {
+function trayectoria(c: Contenido['trayectoria'], u: Contenido['ui']): string {
   const hitos = c.hitos
     .map((h) => `<li class="rv"><span class="anio">${e(h.anio)}</span><p>${e(h.texto)}</p></li>`)
     .join('')
   return `<section id="trayectoria" data-pieza="${c.pieza}" aria-labelledby="t-trayectoria">
   <h2 id="t-trayectoria" class="rv">${e(c.titulo)}</h2>
   <ol class="timeline">${hitos}</ol>
-  <p class="idiomas rv"><span class="mono">Idiomas</span> ${e(c.idiomas)}</p>
+  <p class="idiomas rv"><span class="mono">${e(u.idiomasEtiqueta)}</span> ${e(c.idiomas)}</p>
 </section>`
 }
 
-function contacto(c: Contenido['contacto'], n: Contenido['nicos']): string {
+function contacto(c: Contenido['contacto'], n: Contenido['nicos'], u: Contenido['ui']): string {
   return `<section id="contacto" data-pieza="${c.pieza}" aria-labelledby="t-contacto">
   <h2 id="t-contacto" class="rv">${e(c.titulo)}</h2>
   <p class="intro rv">${e(c.texto)}</p>
   <div class="correo rv">
-    <p class="mail"><span class="mono">Correo</span> <a id="correo" href="mailto:${e(c.email)}">${e(c.email)}</a></p>
-    <button type="button" class="btn btn-ghost btn-sm" id="copiar" data-valor="${e(c.email)}">Copiar</button>
+    <p class="mail"><span class="mono">${e(u.correoEtiqueta)}</span> <a id="correo" href="mailto:${e(c.email)}">${e(c.email)}</a></p>
+    <button type="button" class="btn btn-ghost btn-sm" id="copiar" data-valor="${e(c.email)}" data-ok="${e(u.copiado)}" data-fallo="${e(u.copiarFallo)}" data-aviso-ok="${e(u.avisoCopiado)}" data-aviso-fallo="${e(u.avisoFallo)}">${e(u.copiar)}</button>
     <span class="sr" role="status" id="copiado"></span>
   </div>
-  <p class="botones rv"><a class="btn" href="${e(c.linkedin)}" target="_blank" rel="noopener">LinkedIn<span class="sr"> (pestaña nueva)</span></a><a class="btn btn-ghost" href="${e(c.github)}" target="_blank" rel="noopener">GitHub<span class="sr"> (pestaña nueva)</span></a></p>
+  <p class="botones rv"><a class="btn" href="${e(c.linkedin)}" target="_blank" rel="noopener">LinkedIn<span class="sr"> ${e(u.pestana)}</span></a><a class="btn btn-ghost" href="${e(c.github)}" target="_blank" rel="noopener">GitHub<span class="sr"> ${e(u.pestana)}</span></a></p>
   <div class="pantalla rv"><p class="mono">&gt; ${e(n.bienvenida)}<i class="cursor" aria-hidden="true"></i></p></div>
 </section>`
 }
 
+/** Título y descripción de la página en su idioma. */
+export function renderHead(c: Contenido): string {
+  return `<title>${e(c.meta.titulo)}</title>
+    <meta name="description" content="${e(c.meta.descripcion)}" />`
+}
+
+/** Alternates hreflang (relativos a esta página). Se añaden después del procesado de Vite, que si no los trata como assets. */
+export function hreflangs(c: Contenido, es: Contenido, en: Contenido): { hreflang: string; href: string }[] {
+  const raiz = c.meta.ruta ? '../' : ''
+  const href = (x: Contenido) => `${raiz}${x.meta.ruta}` || './'
+  return [
+    { hreflang: 'en', href: href(en) },
+    { hreflang: 'es', href: href(es) },
+    { hreflang: 'x-default', href: href(en) },
+  ]
+}
+
 export function renderPage(c: Contenido, o: Opciones = {}): string {
-  return `${cabecera()}
+  const raiz = o.raiz ?? ''
+  return `${cabecera(c, raiz)}
 <div class="layout">
   <main id="contenido">
-${inicio(c.inicio)}
-${sistemas(c.sistemas, o)}
+${inicio(c, raiz)}
+${sistemas(c.sistemas, c.ui, o)}
 ${tecnologias(c.tecnologias)}
-${ia(c.ia)}
-${comunidad(c.comunidad)}
-${proyectos(c.proyectos)}
+${ia(c.ia, c.ui)}
+${comunidad(c.comunidad, c.ui)}
+${proyectos(c.proyectos, c.ui)}
 ${ensenanza(c.ensenanza)}
-${trayectoria(c.trayectoria)}
-${contacto(c.contacto, c.nicos)}
+${trayectoria(c.trayectoria, c.ui)}
+${contacto(c.contacto, c.nicos, c.ui)}
   </main>
   <aside class="stage" id="stage" data-active="${c.inicio.pieza}" aria-hidden="true">
     <div class="stage-in">${ilustracion()}</div>
   </aside>
 </div>
-<footer class="foot"><p>© 2026 ${e(c.inicio.nombre)}</p></footer>`
+<footer class="foot"><p>${e(c.ui.pie)} ${e(c.inicio.nombre)}</p></footer>`
 }

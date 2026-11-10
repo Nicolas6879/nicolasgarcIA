@@ -77,6 +77,13 @@ document.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => {
   io.observe(el)
 })
 
+// Selector de idioma: conserva la sección actual (hash) al cambiar de página
+const idioma = document.getElementById('idioma') as HTMLAnchorElement | null
+idioma?.addEventListener('click', () => {
+  const base = idioma.getAttribute('href')!.split('#')[0]
+  idioma.setAttribute('href', base + window.location.hash)
+})
+
 // Copiar correo
 const btn = document.getElementById('copiar') as HTMLButtonElement | null
 const aviso = document.getElementById('copiado')
@@ -102,8 +109,8 @@ btn?.addEventListener('click', async () => {
     }
   }
   const prev = btn.textContent
-  btn.textContent = ok ? 'Copiado' : 'Selecciónalo y copia'
-  if (aviso) aviso.textContent = ok ? 'Correo copiado' : 'No se pudo copiar; el correo quedó seleccionado'
+  btn.textContent = (ok ? btn.dataset.ok : btn.dataset.fallo) ?? ''
+  if (aviso) aviso.textContent = (ok ? btn.dataset.avisoOk : btn.dataset.avisoFallo) ?? ''
   setTimeout(() => {
     btn.textContent = prev
   }, 2000)

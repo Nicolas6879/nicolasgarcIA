@@ -2,19 +2,53 @@
 // Regla: nunca nombrar la empresa donde trabaja; se dice "empresa industrial en Colombia".
 // Cada sección se asocia a una pieza del portátil 3D (campo `pieza`), que se separa al hacer scroll.
 
-export type Pieza =
-  | 'tapa' | 'pantalla' | 'placa' | 'cpu' | 'antena' | 'bateria' | 'teclado' | 'disco' | 'chasis'
+import type { Contenido } from './tipos'
 
-export const es = {
+export type { Pieza } from './tipos'
+
+export const es: Contenido = {
   meta: {
+    lang: 'es',
+    ruta: 'es/',
     titulo: 'Juan Nicolás García · Ingeniero full-stack',
     descripcion:
       'Ingeniero full-stack en Colombia: 8 sistemas en producción, agentes de IA y Web3. Disponible para trabajo remoto.',
   },
 
+  ui: {
+    saltar: 'Saltar al contenido',
+    navAria: 'Secciones',
+    nav: {
+      sistemas: 'Sistemas', tecnologias: 'Tecnologías', ia: 'IA', comunidad: 'Comunidad',
+      proyectos: 'Proyectos', ensenanza: 'Enseñanza', trayectoria: 'Trayectoria', contacto: 'Contacto',
+    },
+    descargarCv: 'Descargar CV',
+    cvPropio: 'cv/Juan-Nicolas-Garcia-CV-ES.pdf',
+    cvOtro: { texto: 'English version (PDF)', archivo: 'cv/Juan-Nicolas-Garcia-CV-EN.pdf' },
+    temaAria: 'Cambiar tema claro u oscuro',
+    idioma: { texto: 'EN', aria: 'View in English', lang: 'en', ruta: '' },
+    capturaDe: 'Captura de',
+    tecnologiasAria: 'Tecnologías',
+    verGithub: 'Ver en GitHub',
+    pestana: '(se abre en pestaña nueva)',
+    demo: 'Demo',
+    repositorio: 'Repositorio',
+    de: 'de',
+    charlas: 'Charlas y talleres',
+    idiomasEtiqueta: 'Idiomas',
+    correoEtiqueta: 'Correo',
+    copiar: 'Copiar',
+    copiado: 'Copiado',
+    copiarFallo: 'Selecciónalo y copia',
+    avisoCopiado: 'Correo copiado',
+    avisoFallo: 'No se pudo copiar; el correo quedó seleccionado',
+    pie: '© 2026',
+    pct: ' %',
+  },
+
   // Primera pantalla: tiene que bastar sola para un reclutador.
   inicio: {
-    pieza: 'tapa' as Pieza,
+    pieza: 'tapa',
     eyebrow: 'Ingeniero full-stack · IA y Web3',
     nombre: 'Juan Nicolás García',
     frase: 'Construyo sistemas completos, de la base de datos a la pantalla, y agentes de IA que trabajan con ellos.',
@@ -30,7 +64,7 @@ export const es = {
 
   // Pantalla: lo que la gente usa todos los días. Aquí las capturas se desintegran en código.
   sistemas: {
-    pieza: 'pantalla' as Pieza,
+    pieza: 'pantalla',
     titulo: 'Sistemas que la gente usa todos los días',
     intro:
       'Desde 2025 trabajo en una empresa industrial en Colombia llevando sus procesos del papel a lo digital. Diseño, construyo y mantengo cada sistema de punta a punta.',
@@ -74,7 +108,7 @@ export const es = {
 
   // Placa base: cada chip es una tecnología, con dónde la usó de verdad.
   tecnologias: {
-    pieza: 'placa' as Pieza,
+    pieza: 'placa',
     titulo: 'Las piezas con las que construyo',
     intro: 'Pasa el cursor por cada chip para ver dónde lo uso en producción.',
     chips: [
@@ -93,7 +127,7 @@ export const es = {
 
   // Procesador: inteligencia artificial.
   ia: {
-    pieza: 'cpu' as Pieza,
+    pieza: 'cpu',
     titulo: 'Agentes de IA que hacen trabajo real',
     items: [
       {
@@ -115,7 +149,7 @@ export const es = {
 
   // Antena: comunidad.
   comunidad: {
-    pieza: 'antena' as Pieza,
+    pieza: 'antena',
     titulo: 'Conectado con la comunidad',
     rol: 'Hedera Developer & Community Ambassador en Colombia (2025 – hoy)',
     logros: [
@@ -133,7 +167,7 @@ export const es = {
 
   // Batería: proyectos propios y hackathons (la energía extra).
   proyectos: {
-    pieza: 'bateria' as Pieza,
+    pieza: 'bateria',
     titulo: 'Lo que construyo por mi cuenta',
     items: [
       {
@@ -162,7 +196,7 @@ export const es = {
 
   // Teclado: enseñar y comunicar.
   ensenanza: {
-    pieza: 'teclado' as Pieza,
+    pieza: 'teclado',
     titulo: 'Sé explicar lo que construyo',
     texto:
       'Entre 2021 y 2024 enseñé Python a más de 150 estudiantes de 10 a 20 años, en más de 30 cursos. Hoy acompaño a desarrolladores nuevos en la comunidad de Hedera.',
@@ -170,7 +204,7 @@ export const es = {
 
   // Disco: la trayectoria guardada.
   trayectoria: {
-    pieza: 'disco' as Pieza,
+    pieza: 'disco',
     titulo: 'Trayectoria',
     hitos: [
       { anio: '2019', texto: 'Técnico en Equipos Electrónicos Industriales, SENA.' },
@@ -184,7 +218,7 @@ export const es = {
 
   // Chasis: se rearma el portátil y la pantalla enciende nicOS con el contacto.
   contacto: {
-    pieza: 'chasis' as Pieza,
+    pieza: 'chasis',
     titulo: '¿Construimos algo juntos?',
     texto: 'Busco trabajo remoto como desarrollador full-stack o construyendo agentes de IA.',
     email: 'jngv08@gmail.com', // confirmado como público (2026-11-10)
@@ -207,4 +241,4 @@ export const es = {
       desconocido: 'Comando no encontrado. Escribe "ayuda".',
     },
   },
-} as const
+}
