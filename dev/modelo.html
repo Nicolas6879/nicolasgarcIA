@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Prueba del modelo (dev)</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #161b26; color: #eef1f5; font: 13px/1.4 monospace; }
+      canvas { display: block; width: 100%; height: 100%; }
+      #panel { position: fixed; top: 12px; left: 12px; background: rgba(22, 27, 38, 0.85); padding: 10px 12px; border: 1px solid #343c4d; max-width: 360px; }
+      button { font: inherit; padding: 6px 12px; cursor: pointer; margin-bottom: 8px; }
+      pre { margin: 0; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <div id="panel">
+      <button id="toggle">Desarmar</button>
+      <pre id="info">cargando...</pre>
+    </div>
+    <script type="module" src="./modelo.ts"></script>
+  </body>
+</html>

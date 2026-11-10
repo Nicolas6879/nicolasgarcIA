@@ -1,3 +1,4 @@
 node_modules
 dist
 *.blend1
+public/models/laptop-raw.glb

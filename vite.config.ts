@@ -1,5 +1,5 @@
 import { defineConfig, type Plugin } from 'vite'
-import { existsSync } from 'node:fs'
+import { existsSync, rmSync } from 'node:fs'
 import { resolve, sep } from 'node:path'
 import { renderPage, renderHead, hreflangs } from './src/render'
 import { es } from './src/content/es'
@@ -45,7 +45,17 @@ function paginaEstatica(): Plugin[] {
 
 export default defineConfig({
   base: './',
-  plugins: [paginaEstatica()],
+  plugins: [
+    paginaEstatica(),
+    {
+      // El GLB sin comprimir es solo un intermedio del pipeline: no debe publicarse.
+      name: 'sin-modelo-raw',
+      apply: 'build',
+      closeBundle() {
+        rmSync(resolve(import.meta.dirname, 'dist/models/laptop-raw.glb'), { force: true })
+      },
+    },
+  ],
   build: {
     rollupOptions: {
       input: {

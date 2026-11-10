@@ -1,0 +1,48 @@
+{
+  "_nota": "Offsets de explosion en coordenadas Y-up de three.js (x, z, -y de Blender), metros. Generado por blender/verificar.mjs",
+  "antena": [
+    0,
+    0.05,
+    -0.07
+  ],
+  "bateria": [
+    0,
+    -0.07,
+    0.1
+  ],
+  "chasis": [
+    0,
+    0,
+    0
+  ],
+  "cpu": [
+    0,
+    0.1,
+    0.26
+  ],
+  "disco": [
+    -0.2,
+    0.07,
+    -0.04
+  ],
+  "pantalla": [
+    0,
+    0.52052,
+    -0.07362
+  ],
+  "placa": [
+    0,
+    0.07,
+    -0.05
+  ],
+  "tapa": [
+    0,
+    0.5,
+    -0.13
+  ],
+  "teclado": [
+    0,
+    0.4,
+    0.02
+  ]
+}
