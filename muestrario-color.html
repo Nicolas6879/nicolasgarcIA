@@ -1,0 +1,154 @@
+<title>Muestrario de color</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: una banda a ancho completo por paleta; cada banda es una maqueta del inicio del portafolio en sus 3 colores */
+:root{--bg:#EEF0F3;--ink:#191C22;--muted:#5A606B;--line:#D3D7DE;
+  --font-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --font-body:"Instrument Sans",ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121419;--ink:#E3E6EB;--muted:#9AA1AD;--line:#2A2E36;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121419;--ink:#E3E6EB;--muted:#9AA1AD;--line:#2A2E36;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.55;margin:0;padding-block:32px 64px}
+.pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1040px;margin:0 auto}
+h1,h2{font-family:var(--font-display);margin:0;text-wrap:balance;line-height:1.1}
+h1{font-size:clamp(2rem,5vw,3rem);font-weight:800}
+.intro{display:flex;flex-direction:column;gap:12px;margin-bottom:36px}
+.intro p{margin:0;max-width:64ch;color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:40px}
+
+.opt{display:flex;flex-direction:column;gap:14px}
+.opt-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.opt-head h2{font-size:1.5rem}
+.letter{font-family:var(--font-mono);font-size:.8rem;font-weight:600;letter-spacing:.08em;color:var(--muted)}
+.rule{font-family:var(--font-mono);font-size:.74rem;padding:2px 9px;border:1px solid var(--line);border-radius:99px;color:var(--muted)}
+.opt > p{margin:0;max-width:68ch;color:var(--muted);font-size:.95rem}
+
+/* Maqueta: cada una fija sus propios 3 colores (--b base, --s secundario, --a1/--a2 acento) */
+.mock{background:var(--b);color:var(--s);border-radius:12px;overflow:hidden;padding:clamp(20px,4vw,40px);
+  display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:center;border:1px solid var(--line)}
+@media (max-width:760px){.mock{grid-template-columns:1fr}}
+.mock .who{display:flex;flex-direction:column;gap:14px;min-width:0}
+.mock .eyb{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;opacity:.7}
+.mock h3{font-family:var(--font-display);font-weight:800;font-size:clamp(1.8rem,4.4vw,2.8rem);line-height:1.02;margin:0;letter-spacing:-.02em}
+.grad{background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.mock .role{margin:0;font-size:1rem;opacity:.85}
+.nums{display:flex;gap:22px;flex-wrap:wrap}
+.nums div{display:flex;flex-direction:column}
+.nums b{font-family:var(--font-display);font-size:1.7rem;line-height:1;font-variant-numeric:tabular-nums}
+.nums span{font-size:.78rem;opacity:.7}
+.ctas{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:600 .9rem var(--font-body);padding:10px 16px;border-radius:8px;border:0;cursor:pointer;color:var(--b);background:linear-gradient(90deg,var(--a1),var(--a2))}
+.btn.ghost{background:transparent;color:var(--s);border:1.5px solid color-mix(in oklab,var(--s) 45%,var(--b))}
+.btn:focus-visible{outline:2px solid var(--s);outline-offset:3px}
+
+/* Portátil esquemático */
+.laptop{display:flex;flex-direction:column;align-items:center;min-width:0}
+.screen{width:100%;max-width:340px;aspect-ratio:16/10;border-radius:10px 10px 0 0;border:2px solid var(--s);
+  background:color-mix(in oklab,var(--b) 80%,var(--s));padding:12px;font-family:var(--font-mono);font-size:.68rem;line-height:1.55;position:relative;overflow:hidden}
+.screen .k{color:var(--a1)} .screen .k2{color:var(--a2)}
+.screen .bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,var(--a1),var(--a2))}
+.base{width:112%;max-width:390px;height:12px;border-radius:0 0 10px 10px;background:var(--s);position:relative}
+.base::after{content:"";position:absolute;right:14%;top:4px;width:6px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--a1),var(--a2));box-shadow:0 0 10px var(--a2)}
+
+/* Proporción y muestras */
+.meta{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px 28px;align-items:center}
+@media (max-width:760px){.meta{grid-template-columns:1fr}}
+.prop{display:flex;height:34px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.prop span{display:flex;align-items:center;padding:0 8px;font-family:var(--font-mono);font-size:.68rem;font-weight:600;white-space:nowrap;overflow:hidden}
+.sw{display:flex;flex-wrap:wrap;gap:8px 16px;font-family:var(--font-mono);font-size:.76rem;color:var(--muted)}
+.sw span{display:inline-flex;align-items:center;gap:6px}
+.sw i{width:16px;height:16px;border-radius:4px;border:1px solid var(--line);display:inline-block}
+.note{margin-top:40px;font-size:.88rem;color:var(--muted);max-width:68ch}
+</style>
+
+<div class="pad"><div class="wrap">
+<header class="intro">
+  <span class="letter">PASO 1 · PALETA DEL PORTAFOLIO</span>
+  <h1>Cuatro paletas para escoger</h1>
+  <p>Cada banda es la primera pantalla del portafolio pintada con 3 colores. A, B y D usan tu regla: dos colores principales hacen el 90 % y el tercero es un degradado que solo aparece para resaltar. C usa la 60-30-10 clásica con un acento sólido, para comparar. Dime una letra, o una mezcla («la B pero con el degradado de la A»).</p>
+</header>
+
+<div class="list">
+
+<section class="opt">
+  <div class="opt-head"><span class="letter">A</span><h2>Brasa</h2><span class="rule">2 principales + degradado</span></div>
+  <p>Grafito azulado y aluminio, como el chasis de un portátil. El degradado naranja a magenta es el LED de encendido. Es la más cálida y la que más llama la atención en los botones.</p>
+  <div class="mock" style="--b:#161B26;--s:#D7DCE4;--a1:#FF7A45;--a2:#FF3D7F">
+    <div class="who">
+      <span class="eyb">Ingeniero full-stack · IA y Web3</span>
+      <h3>Juan Nicolás <span class="grad">García</span></h3>
+      <p class="role">Construyo sistemas completos, de la base de datos a la pantalla.</p>
+      <div class="nums"><div><b class="grad">8</b><span>sistemas en producción</span></div><div><b>600+</b><span>documentos sin papel</span></div><div><b>39 %</b><span>menos tokens</span></div></div>
+      <div class="ctas"><button class="btn" type="button">Ver CV</button><button class="btn ghost" type="button">Escribirme</button></div>
+    </div>
+    <div class="laptop" aria-hidden="true"><div class="screen"><span class="k">nico@nicOS</span>:~$ whoami<br>full-stack · <span class="k2">agentes de IA</span><br>Vue 3 · Laravel · SQL Server<br>_<span class="bar"></span></div><div class="base"></div></div>
+  </div>
+  <div class="meta">
+    <div class="prop"><span style="flex:62;background:#161B26;color:#D7DCE4">BASE 60</span><span style="flex:28;background:#D7DCE4;color:#161B26">SEC. 30</span><span style="flex:10;background:linear-gradient(90deg,#FF7A45,#FF3D7F);color:#161B26">10</span></div>
+    <div class="sw"><span><i style="background:#161B26"></i>#161B26</span><span><i style="background:#D7DCE4"></i>#D7DCE4</span><span><i style="background:linear-gradient(90deg,#FF7A45,#FF3D7F)"></i>#FF7A45 → #FF3D7F</span></div>
+  </div>
+</section>
+
+<section class="opt">
+  <div class="opt-head"><span class="letter">B</span><h2>Aurora de commits</h2><span class="rule">2 principales + degradado</span></div>
+  <p>Azul noche y blanco frío. El degradado va del verde de un commit al azul eléctrico, así que conecta con el código que se desintegra. Se siente más tecnológica y tranquila.</p>
+  <div class="mock" style="--b:#0F1420;--s:#E4E8EF;--a1:#48E5A0;--a2:#3D8BFF">
+    <div class="who">
+      <span class="eyb">Ingeniero full-stack · IA y Web3</span>
+      <h3>Juan Nicolás <span class="grad">García</span></h3>
+      <p class="role">Construyo sistemas completos, de la base de datos a la pantalla.</p>
+      <div class="nums"><div><b class="grad">8</b><span>sistemas en producción</span></div><div><b>600+</b><span>documentos sin papel</span></div><div><b>39 %</b><span>menos tokens</span></div></div>
+      <div class="ctas"><button class="btn" type="button">Ver CV</button><button class="btn ghost" type="button">Escribirme</button></div>
+    </div>
+    <div class="laptop" aria-hidden="true"><div class="screen"><span class="k">nico@nicOS</span>:~$ whoami<br>full-stack · <span class="k2">agentes de IA</span><br>Vue 3 · Laravel · SQL Server<br>_<span class="bar"></span></div><div class="base"></div></div>
+  </div>
+  <div class="meta">
+    <div class="prop"><span style="flex:62;background:#0F1420;color:#E4E8EF">BASE 60</span><span style="flex:28;background:#E4E8EF;color:#0F1420">SEC. 30</span><span style="flex:10;background:linear-gradient(90deg,#48E5A0,#3D8BFF);color:#0F1420">10</span></div>
+    <div class="sw"><span><i style="background:#0F1420"></i>#0F1420</span><span><i style="background:#E4E8EF"></i>#E4E8EF</span><span><i style="background:linear-gradient(90deg,#48E5A0,#3D8BFF)"></i>#48E5A0 → #3D8BFF</span></div>
+  </div>
+</section>
+
+<section class="opt">
+  <div class="opt-head"><span class="letter">C</span><h2>Plano técnico claro</h2><span class="rule">60-30-10 clásica · acento sólido</span></div>
+  <p>Fondo claro, tinta oscura y un naranja sólido. Es la más fácil de leer para un reclutador y se parece a un plano de ingeniería. Es la menos «gamer», y el 3D se vería como un dibujo técnico.</p>
+  <div class="mock" style="--b:#EEF1F5;--s:#161B26;--a1:#E8551F;--a2:#E8551F">
+    <div class="who">
+      <span class="eyb">Ingeniero full-stack · IA y Web3</span>
+      <h3>Juan Nicolás <span class="grad">García</span></h3>
+      <p class="role">Construyo sistemas completos, de la base de datos a la pantalla.</p>
+      <div class="nums"><div><b class="grad">8</b><span>sistemas en producción</span></div><div><b>600+</b><span>documentos sin papel</span></div><div><b>39 %</b><span>menos tokens</span></div></div>
+      <div class="ctas"><button class="btn" type="button">Ver CV</button><button class="btn ghost" type="button">Escribirme</button></div>
+    </div>
+    <div class="laptop" aria-hidden="true"><div class="screen"><span class="k">nico@nicOS</span>:~$ whoami<br>full-stack · <span class="k2">agentes de IA</span><br>Vue 3 · Laravel · SQL Server<br>_<span class="bar"></span></div><div class="base"></div></div>
+  </div>
+  <div class="meta">
+    <div class="prop"><span style="flex:60;background:#EEF1F5;color:#161B26">BASE 60</span><span style="flex:30;background:#161B26;color:#EEF1F5">SEC. 30</span><span style="flex:10;background:#E8551F;color:#EEF1F5">10</span></div>
+    <div class="sw"><span><i style="background:#EEF1F5"></i>#EEF1F5</span><span><i style="background:#161B26"></i>#161B26</span><span><i style="background:#E8551F"></i>#E8551F</span></div>
+  </div>
+</section>
+
+<section class="opt">
+  <div class="opt-head"><span class="letter">D</span><h2>Fósforo retro</h2><span class="rule">2 principales + degradado</span></div>
+  <p>Marrón oscuro de monitor viejo y crema de fósforo, con un degradado ámbar a rojo. Le queda perfecto a nicOS y tiene mucha personalidad, aunque se ve menos «corporativa».</p>
+  <div class="mock" style="--b:#1A1512;--s:#F1E4C8;--a1:#FFB000;--a2:#FF5A36">
+    <div class="who">
+      <span class="eyb">Ingeniero full-stack · IA y Web3</span>
+      <h3>Juan Nicolás <span class="grad">García</span></h3>
+      <p class="role">Construyo sistemas completos, de la base de datos a la pantalla.</p>
+      <div class="nums"><div><b class="grad">8</b><span>sistemas en producción</span></div><div><b>600+</b><span>documentos sin papel</span></div><div><b>39 %</b><span>menos tokens</span></div></div>
+      <div class="ctas"><button class="btn" type="button">Ver CV</button><button class="btn ghost" type="button">Escribirme</button></div>
+    </div>
+    <div class="laptop" aria-hidden="true"><div class="screen"><span class="k">nico@nicOS</span>:~$ whoami<br>full-stack · <span class="k2">agentes de IA</span><br>Vue 3 · Laravel · SQL Server<br>_<span class="bar"></span></div><div class="base"></div></div>
+  </div>
+  <div class="meta">
+    <div class="prop"><span style="flex:62;background:#1A1512;color:#F1E4C8">BASE 60</span><span style="flex:28;background:#F1E4C8;color:#1A1512">SEC. 30</span><span style="flex:10;background:linear-gradient(90deg,#FFB000,#FF5A36);color:#1A1512">10</span></div>
+    <div class="sw"><span><i style="background:#1A1512"></i>#1A1512</span><span><i style="background:#F1E4C8"></i>#F1E4C8</span><span><i style="background:linear-gradient(90deg,#FFB000,#FF5A36)"></i>#FFB000 → #FF5A36</span></div>
+  </div>
+</section>
+
+</div>
+<p class="note">En las cuatro, el texto principal supera el contraste 4,5:1. El degradado solo va en botones, cifras grandes y detalles, nunca en texto pequeño.</p>
+</div></div>

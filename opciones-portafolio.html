@@ -1,0 +1,625 @@
+<title>Cuatro portafolios posibles</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: informe editorial de una columna (~68ch) con tarjetas de concepto a ancho completo; la propia página aplica la regla 90/10 */
+:root{
+  --bg:#EEF0F3;        /* base ~60 % */
+  --ink:#191C22;       /* secundario ~30 % */
+  --accent:#C8431A;    /* acento ~10 % */
+  --surface:#F8F9FB;
+  --muted:color-mix(in oklab,var(--ink) 62%,var(--bg));
+  --line:color-mix(in oklab,var(--ink) 14%,var(--bg));
+  --font-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --font-body:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14171C;--ink:#E3E6EB;--accent:#FF7A45;--surface:#1B1F26;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14171C;--ink:#E3E6EB;--accent:#FF7A45;--surface:#1B1F26;color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:16.5px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 80px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:64px}
+.prose{max-width:68ch}
+h1,h2,h3{font-family:var(--font-display);text-wrap:balance;line-height:1.08;margin:0}
+h1{font-size:clamp(2.3rem,6vw,4.2rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(1.6rem,3.4vw,2.3rem);font-weight:700;letter-spacing:-.01em}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+a{color:inherit;text-decoration-color:var(--accent);text-underline-offset:3px;text-decoration-thickness:1.5px}
+a:hover{color:var(--accent)}
+a:focus-visible,button:focus-visible,.demo:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.eyebrow{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:16px}
+.lede{font-size:1.15rem;color:var(--muted);max-width:60ch}
+code,.mono{font-family:var(--font-mono);font-size:.86em}
+
+/* Hero */
+header.hero{display:flex;flex-direction:column;gap:20px;padding-top:8px}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.verdict{border-left:3px solid var(--accent);padding:4px 0 4px 18px;max-width:68ch;display:flex;flex-direction:column;gap:8px}
+.verdict strong{font-family:var(--font-display);font-size:1.2rem}
+
+/* Hallazgos */
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px 36px}
+.finding{display:flex;flex-direction:column;gap:6px;min-width:0}
+.finding h3{font-size:1.02rem}
+.finding p{color:var(--muted);font-size:.96rem}
+
+/* Regla de color */
+.rule{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:36px;align-items:center}
+@media (max-width:760px){.rule{grid-template-columns:1fr}}
+.bar{display:flex;height:64px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.bar span{display:flex;align-items:flex-end;padding:6px 8px;font-family:var(--font-mono);font-size:.7rem;font-weight:600}
+.bar-legend{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:.74rem;color:var(--muted);margin-top:8px;gap:8px;flex-wrap:wrap}
+
+/* Conceptos */
+.concept{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:clamp(20px,4vw,40px);display:flex;flex-direction:column;gap:28px}
+.concept.pick{border-color:var(--accent);border-width:2px}
+.c-head{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:32px;align-items:center}
+@media (max-width:820px){.c-head{grid-template-columns:1fr}}
+.c-head .stack{gap:12px}
+.tag{display:inline-flex;align-self:flex-start;font-family:var(--font-mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.tag.rec{border-color:var(--accent);color:var(--accent)}
+.c-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px 40px}
+@media (max-width:820px){.c-body{grid-template-columns:1fr}}
+.c-body h3{font-family:var(--font-mono);font-size:.76rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+ol.scroll{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:10px}
+ol.scroll li{counter-increment:s;display:grid;grid-template-columns:2.2em minmax(0,1fr);gap:4px;font-size:.95rem}
+ol.scroll li::before{content:counter(s,decimal-leading-zero);font-family:var(--font-mono);font-size:.78rem;color:var(--accent);padding-top:3px}
+ol.scroll b{font-weight:600}
+ul.plain{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:6px;font-size:.95rem}
+ul.plain li::marker{color:var(--accent)}
+.swatches{display:flex;flex-direction:column;gap:10px}
+.sw{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;font-size:.92rem}
+.sw i{width:40px;height:40px;border-radius:6px;border:1px solid var(--line);display:block}
+.sw .mono{color:var(--muted)}
+.meters{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;align-items:center;font-size:.92rem}
+.dots{display:flex;gap:4px}
+.dots b{width:16px;height:8px;border-radius:2px;background:var(--line)}
+.dots b.on{background:var(--ink)}
+.dots.risk b.on{background:var(--accent)}
+.refs{display:flex;flex-direction:column;gap:6px;font-size:.93rem}
+.full{grid-column:1/-1}
+
+/* Mini demos (pasar el cursor o enfocar con teclado) */
+.demo{position:relative;aspect-ratio:16/10;max-width:100%;border-radius:8px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.demo .hint{position:absolute;left:12px;bottom:10px;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.05em;opacity:.75}
+
+/* 1: computador */
+.d1{background:#161B26;color:#D7DCE4}
+.d1 .rig{position:relative;width:52%;aspect-ratio:1.5;transform:rotateX(55deg) rotateZ(-35deg);transform-style:preserve-3d}
+.d1 .layer{position:absolute;inset:0;border-radius:6px;border:1.5px solid #D7DCE4;transition:transform .7s cubic-bezier(.2,.8,.2,1);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:.62rem}
+.d1 .l1{background:#1d2433;transform:translateZ(0)}
+.d1 .l2{background:#232b3c;transform:translateZ(10px)}
+.d1 .l3{background:#2a3347;transform:translateZ(20px)}
+.d1 .l4{background:#FF7A45;color:#161B26;border-color:#FF7A45;transform:translateZ(30px) scale(.4);font-weight:600}
+.d1:hover .l2,.d1:focus-visible .l2{transform:translateZ(46px)}
+.d1:hover .l3,.d1:focus-visible .l3{transform:translateZ(92px)}
+.d1:hover .l4,.d1:focus-visible .l4{transform:translateZ(140px) scale(.4)}
+
+/* 2: repo */
+.d2{background:#0E1512;color:#CFE3D8;flex-direction:column;gap:14px}
+.d2 .grid{display:grid;grid-template-columns:repeat(14,1fr);gap:3px;width:70%}
+.d2 .grid b{aspect-ratio:1;border-radius:2px;background:#1b2a23;transition:transform .6s,opacity .6s,background .6s}
+.d2 .grid b.a{background:#2b6a4f}.d2 .grid b.b{background:#48E5A0}
+.d2 .code{position:absolute;inset:0;padding:22px;font-family:var(--font-mono);font-size:.66rem;line-height:1.5;opacity:0;transition:opacity .6s .25s;white-space:pre;color:#CFE3D8}
+.d2 .code em{font-style:normal;color:#48E5A0}
+.d2:hover .grid b,.d2:focus-visible .grid b{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3)}
+.d2:hover .code,.d2:focus-visible .code{opacity:1}
+
+/* 3: escritorio retro */
+.d3{background:#D9D4C7;color:#1E1E24}
+.d3 .win{width:72%;background:#1E1E24;border-radius:6px;overflow:hidden;box-shadow:6px 6px 0 #1E1E24}
+.d3 .bar3{background:#D9D4C7;border:2px solid #1E1E24;padding:4px 8px;font-family:var(--font-mono);font-size:.62rem;display:flex;justify-content:space-between}
+.d3 .bar3 i{width:10px;height:10px;background:#C2311F;display:inline-block;border-radius:2px}
+.d3 .term{padding:10px 12px;font-family:var(--font-mono);font-size:.66rem;line-height:1.6;color:#D9D4C7;min-height:6.4em}
+.d3 .term span{color:#E8B9A8}
+.d3 .cur{display:inline-block;width:.55em;height:1em;background:#D9D4C7;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.d3 .typed{display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:bottom;max-width:0;transition:max-width 1.2s steps(14)}
+.d3:hover .typed,.d3:focus-visible .typed{max-width:14ch}
+
+/* 4: cadena de bloques */
+.d4{background:#EEF1F5;color:#121826}
+.d4 .chain{display:flex;align-items:center;gap:0;width:86%}
+.d4 .blk{flex:1;min-width:0;border:1.5px solid #121826;border-radius:5px;padding:6px;font-family:var(--font-mono);font-size:.56rem;line-height:1.35;background:#EEF1F5;transition:transform .5s,background .5s,color .5s}
+.d4 .blk b{display:block;font-size:.7rem}
+.d4 .lnk{width:12px;height:1.5px;background:#121826;flex:none}
+.d4:hover .blk:last-child,.d4:focus-visible .blk:last-child{background:#2D5BFF;color:#EEF1F5;border-color:#2D5BFF;transform:translateY(-8px)}
+.d4:hover .blk:nth-child(5),.d4:focus-visible .blk:nth-child(5){transform:translateY(-4px)}
+
+/* Tabla */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:.92rem}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+tr:last-child td{border-bottom:0}
+td.y{color:var(--accent);font-weight:600}
+
+/* Fases */
+.phases{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.phase{border-top:2px solid var(--ink);padding-top:12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.phase:first-child{border-top-color:var(--accent)}
+.phase .eyebrow{color:var(--ink)}
+.phase p{font-size:.94rem;color:var(--muted)}
+.budget{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px}
+.budget div{display:flex;flex-direction:column;gap:2px}
+.budget b{font-family:var(--font-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.budget span{font-size:.9rem;color:var(--muted)}
+.qs{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:10px}
+.sources{columns:2 300px;column-gap:40px;font-size:.88rem;color:var(--muted)}
+.sources a{display:block;margin-bottom:6px;break-inside:avoid}
+footer{font-size:.85rem;color:var(--muted);border-top:1px solid var(--line);padding-top:20px}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <span class="eyebrow">Investigación · portafolio web de Nicolás · nov. 2026</span>
+  <h1>Cuatro portafolios posibles, y el que <em>haría yo</em></h1>
+  <p class="lede">Revisé portafolios premiados, tutoriales de efectos de scroll en 3D y lo poco que se sabe de cómo miran los reclutadores. Aquí van cuatro conceptos con su recorrido, paleta, stack, esfuerzo y riesgos. Pasa el cursor (o el foco del teclado) por cada miniatura para ver la idea en pequeño.</p>
+  <div class="verdict">
+    <span class="eyebrow">Recomendación corta</span>
+    <strong>Concepto 1 + un toque del 2: «Del producto al código».</strong>
+    <p>Un computador que se desarma con el scroll, y en la pieza de la pantalla tus sistemas reales se deshacen en el código que los hace funcionar. Es tu idea, se entiende sin saber programar («construye todo, pieza por pieza») y deja lo espectacular para quien quiera quedarse. Antes de cualquier animación, la primera pantalla ya dice quién eres, qué haces y cómo contactarte.</p>
+  </div>
+</header>
+
+<section class="stack">
+  <span class="eyebrow">Lo que dice la investigación</span>
+  <h2>Seis hallazgos que cambian el diseño</h2>
+  <div class="findings">
+    <div class="finding">
+      <h3>El reclutador decide rápido</h3>
+      <p>En una encuesta a reclutadores de diseño, el 80 % dijo dedicar 3 minutos o menos a un portafolio. El dato duro de «6 segundos» viene de hojas de vida, no de portafolios, pero la lección es la misma: nombre, rol y prueba en la primera pantalla.</p>
+    </div>
+    <div class="finding">
+      <h3>Lo jugable sí consigue trabajo</h3>
+      <p>El portafolio-ramen 3D de Jesse Zhou le dio premios y varias ofertas al pasar de consultoría a software. El de Bruno Simon (un carro que manejas) se volvió referencia mundial y lo reconstruyó para WebGPU en 2025-2026.</p>
+    </div>
+    <div class="finding">
+      <h3>«Desarmar con scroll» tiene receta</h3>
+      <p>No hay un tutorial exacto de vista explotada, pero el patrón es estándar: un contenedor fijado, GSAP ScrollTrigger con <code>scrub</code> mueve un valor de 0 a 1 y cada pieza va de su posición de reposo a su posición separada. Codrops lo enseña con una caja que se pliega.</p>
+    </div>
+    <div class="finding">
+      <h3>«Desintegrar» ya está resuelto</h3>
+      <p>Codrops publicó la disolución de modelos con ruido y partículas (feb. 2025) y la de texto en polvo con WebGPU (ene. 2026). Para texto plano hay componentes que lo hacen con scroll y lo rearman al volver.</p>
+    </div>
+    <div class="finding">
+      <h3>El grafo de GitHub en 3D existe, y es fácil</h3>
+      <p>GithubCity, GitHub Skyline y gh-skyline convierten las contribuciones en edificios. Se leen con la API pública sin token, así que se puede generar al compilar el sitio.</p>
+    </div>
+    <div class="finding">
+      <h3>La terminal pura aleja a quien no programa</h3>
+      <p>Los portafolios tipo consola gustan entre desarrolladores, pero exigen escribir comandos. Sirven como capa secreta, no como entrada principal para un reclutador.</p>
+    </div>
+  </div>
+</section>
+
+<section class="rule">
+  <div class="stack prose">
+    <span class="eyebrow">La regla de tu curso</span>
+    <h2>Tres colores: dos hacen el 90 %, uno acentúa el 10 %</h2>
+    <p>Es la regla 60-30-10 contada de otra forma: un color base para fondos y superficies (~60 %), uno secundario para texto, bordes y piezas (~30 %) y un acento solo para lo que quieres que se toque o se recuerde (~10 %): botones, cifras clave, la pieza activa. La proporción es de peso visual, no de píxeles contados.</p>
+    <p>En cada paleta verifiqué que el texto secundario sobre la base supere 4,5:1 de contraste (nivel AA). El acento se reserva para botones, cifras grandes y detalles gráficos, donde basta 3:1. Esta misma página usa la regla.</p>
+  </div>
+  <div>
+    <div class="bar" role="img" aria-label="Barra de proporciones: base 60 por ciento, secundario 30 por ciento, acento 10 por ciento">
+      <span style="flex:60;background:var(--bg);color:var(--ink)">BASE 60</span>
+      <span style="flex:30;background:var(--ink);color:var(--bg)">SEC. 30</span>
+      <span style="flex:10;background:var(--accent);color:var(--bg)">10</span>
+    </div>
+    <div class="bar-legend"><span>fondos, aire, superficies</span><span>texto, bordes, piezas</span><span>CTA, cifras</span></div>
+  </div>
+</section>
+
+<!-- CONCEPTO 1 -->
+<article class="concept pick" id="c1">
+  <div class="c-head">
+    <div class="stack">
+      <span class="tag rec">Concepto 1 · recomendado</span>
+      <h2>El computador que se desarma</h2>
+      <p>Un portátil low-poly en la primera pantalla. Con el scroll se abre como un plano técnico: cada pieza que se separa es una parte de tu historia. Al final se vuelve a armar y la pantalla se enciende con tu contacto. La metáfora la entiende cualquiera: conoces cada capa del sistema.</p>
+    </div>
+    <div class="demo d1" tabindex="0" aria-label="Miniatura: capas de un computador que se separan al pasar el cursor">
+      <div class="rig">
+        <div class="layer l1">chasis</div><div class="layer l2">placa</div><div class="layer l3">pantalla</div><div class="layer l4">CPU</div>
+      </div>
+      <span class="hint">pasa el cursor ›</span>
+    </div>
+  </div>
+  <div class="c-body">
+    <div>
+      <h3>Recorrido de scroll</h3>
+      <ol class="scroll">
+        <li><span><b>Inicio.</b> Nombre, «Ingeniero full-stack · agentes de IA y Web3», 3 cifras (8 sistemas en producción, +600 documentos digitalizados, ~39 % menos tokens) y dos botones: Ver CV y Escribirme. El portátil gira despacio con el mouse.</span></li>
+        <li><span><b>La tapa se levanta.</b> La pantalla se separa y muestra capturas de tus sistemas (calidad ISO 9001, app sin conexión, migración desde C#). Aquí entra el toque del concepto 2: cada interfaz se deshace en el código Vue y Laravel que la sostiene.</span></li>
+        <li><span><b>La placa base.</b> Cada chip es una tecnología (Vue 3, TypeScript, Laravel, SQL Server, Claude/MCP, Hedera). Al pasar el cursor, el chip dice dónde la usaste en producción.</span></li>
+        <li><span><b>El procesador.</b> Tus proyectos de IA: el servidor MCP que conecta Claude con un sistema real y el plugin tacano, con un contador que anima el 39 %.</span></li>
+        <li><span><b>La antena de red.</b> Comunidad: embajador de Hedera en Colombia, primer lugar en el reto de ciberseguridad Web3 de ETHDenver 2026, speaker en Blockchain Summit Latam, 3,5 años enseñando.</span></li>
+        <li><span><b>El disco.</b> Línea de tiempo 2021 → 2026, de primer código a ingeniero titulado.</span></li>
+        <li><span><b>Se vuelve a armar.</b> El portátil se cierra, se abre de nuevo y la pantalla muestra el formulario de contacto.</span></li>
+      </ol>
+    </div>
+    <div class="stack" style="gap:24px">
+      <div>
+        <h3>Interacciones que retienen</h3>
+        <ul class="plain">
+          <li>Arrastrar para girar el modelo en cualquier punto del recorrido.</li>
+          <li>Clic en una pieza suelta para ver su ficha (el proyecto, el problema, el resultado).</li>
+          <li>Tecla <code>Ctrl + K</code>: abre una terminal secreta con comandos (<code>whoami</code>, <code>proyectos</code>, <code>cv</code>).</li>
+          <li>Sonido opcional de «clic mecánico» al encajar piezas, apagado por defecto.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Paleta «taller de noche»</h3>
+        <div class="swatches">
+          <div class="sw"><i style="background:#161B26"></i><span>Base · fondo y sombras del chasis</span><span class="mono">#161B26 · 60 %</span></div>
+          <div class="sw"><i style="background:#D7DCE4"></i><span>Secundario · texto, aluminio, líneas</span><span class="mono">#D7DCE4 · 30 %</span></div>
+          <div class="sw"><i style="background:#FF7A45"></i><span>Acento · LED de encendido, CTA, cifras</span><span class="mono">#FF7A45 · 10 %</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Stack</h3>
+      <ul class="plain">
+        <li><b>Astro</b> (HTML estático, carga mínima) con una isla de <b>three.js</b>; o Vue 3 + TresJS si prefieres quedarte en tu ecosistema.</li>
+        <li><b>GSAP ScrollTrigger</b> + <b>Lenis</b> para el scroll suave y la línea de tiempo.</li>
+        <li>Modelo en Blender exportado a <b>glTF</b> comprimido (Draco o Meshopt, texturas KTX2), por piezas con nombre.</li>
+        <li>Plan B en móvil: secuencia de imágenes prerenderizadas (estilo producto de Apple) en lugar de 3D en vivo.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Esfuerzo y riesgo</h3>
+      <div class="meters">
+        <span>Esfuerzo</span><span class="dots" aria-label="4 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b></b></span>
+        <span>Rendimiento móvil</span><span class="dots risk" aria-label="riesgo 4 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b></b></span>
+        <span>Accesibilidad</span><span class="dots risk" aria-label="riesgo 2 de 5"><b class="on"></b><b class="on"></b><b></b><b></b><b></b></span>
+        <span>Tiempo de carga</span><span class="dots risk" aria-label="riesgo 3 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b></b><b></b></span>
+      </div>
+      <p style="margin-top:12px;font-size:.92rem;color:var(--muted)">5 a 7 semanas a medio tiempo. Lo más largo es el modelo 3D: comprarlo hecho (Sketchfab con licencia) ahorra 1-2 semanas. El texto vive en HTML real, así que lectores de pantalla y Google lo leen aunque el 3D no cargue.</p>
+    </div>
+    <div class="full">
+      <h3>Referencias</h3>
+      <div class="refs">
+        <a href="https://tympanus.net/codrops/2022/12/13/how-to-code-an-on-scroll-folding-3d-cardboard-box-animation-with-three-js-and-gsap">Codrops: caja 3D que se pliega con el scroll (three.js + GSAP), la base técnica del desarmado</a>
+        <a href="https://tympanus.net/codrops/2025/11/19/how-to-build-cinematic-3d-scroll-experiences-with-gsap/">Codrops: experiencias 3D cinematográficas con scroll (cámara + texto)</a>
+        <a href="https://discourse.threejs.org/t/pc-anatomy-interactive-3d-pc-hardware-explorer-built-with-three-js/94612">PC Anatomy: explorador 3D de piezas de un PC en three.js</a>
+        <a href="https://henryheffernan.com">Henry Heffernan: un computador 3D con un sistema operativo dentro de la pantalla</a>
+        <a href="https://webflow.com/made-in-webflow/website/wfc23-spline-demo-2">Spline + Webflow: demo de objeto que explota con el scroll (opción sin código)</a>
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- CONCEPTO 2 -->
+<article class="concept" id="c2">
+  <div class="c-head">
+    <div class="stack">
+      <span class="tag">Concepto 2</span>
+      <h2>El repositorio que se desintegra</h2>
+      <p>La página empieza como un perfil de desarrollador con su grafo de contribuciones (diseño propio, inspirado en GitHub sin copiar su marca). Al bajar, cada cosa se deshace en partículas que se reorganizan en el código de verdad que la produjo. Es tu segunda idea llevada al extremo.</p>
+    </div>
+    <div class="demo d2" tabindex="0" aria-label="Miniatura: un grafo de contribuciones que se deshace y deja ver código">
+      <div class="grid" id="grid2"></div>
+      <div class="code" aria-hidden="true"><em>export</em> function ahorrar(tokens) {
+  const plan = <em>orquestar</em>(tokens)
+  return plan.delegar(<em>'haiku'</em>)
+}
+<em>// −39 % tokens</em></div>
+      <span class="hint">pasa el cursor ›</span>
+    </div>
+  </div>
+  <div class="c-body">
+    <div>
+      <h3>Recorrido de scroll</h3>
+      <ol class="scroll">
+        <li><span><b>README.md.</b> Tu tarjeta de perfil como un README: quién eres, qué buscas, los 3 números y botones de CV y contacto.</span></li>
+        <li><span><b>El grafo se levanta.</b> Los cuadritos de contribuciones 2021-2026 crecen hasta ser una ciudad 3D. Pasar el cursor por un edificio muestra qué construiste ese mes.</span></li>
+        <li><span><b>Repos fijados.</b> Cada tarjeta de proyecto se disuelve en partículas y se rearma como un fragmento de su código, con una línea en lenguaje simple: «esto hace que 3 áreas dejen el papel».</span></li>
+        <li><span><b>Diff de tu carrera.</b> Un <code>git log</code> visual: de instructor a practicante, a ingeniero, a embajador de Hedera.</span></li>
+        <li><span><b>Issues abiertos.</b> «Busco: trabajo remoto full-stack o con agentes de IA». Contacto como si abrieran un issue.</span></li>
+      </ol>
+    </div>
+    <div class="stack" style="gap:24px">
+      <div>
+        <h3>Interacciones que retienen</h3>
+        <ul class="plain">
+          <li>Mover el mouse sobre un bloque de código lo dispersa como arena y se rearma al alejarte.</li>
+          <li>Recorrer la ciudad de contribuciones con el mouse o las flechas.</li>
+          <li>Botón «ver la versión humana»: cambia el código por la explicación para quien no programa.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Paleta «commit»</h3>
+        <div class="swatches">
+          <div class="sw"><i style="background:#0E1512"></i><span>Base · fondo verde casi negro</span><span class="mono">#0E1512 · 60 %</span></div>
+          <div class="sw"><i style="background:#CFE3D8"></i><span>Secundario · texto y código</span><span class="mono">#CFE3D8 · 30 %</span></div>
+          <div class="sw"><i style="background:#48E5A0"></i><span>Acento · días de commit, CTA</span><span class="mono">#48E5A0 · 10 %</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Stack</h3>
+      <ul class="plain">
+        <li><b>Next.js o Astro</b>; datos de contribuciones leídos de la API de GitHub al compilar (sin token en el navegador).</li>
+        <li><b>three.js</b> con partículas en <code>InstancedMesh</code> o <code>Points</code>; WebGPU con respaldo WebGL.</li>
+        <li>Texto con fuentes MSDF para que el código se disuelva nítido.</li>
+        <li>Shiki para resaltar el código real.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Esfuerzo y riesgo</h3>
+      <div class="meters">
+        <span>Esfuerzo</span><span class="dots" aria-label="4 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b></b></span>
+        <span>Rendimiento móvil</span><span class="dots risk" aria-label="riesgo 3 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b></b><b></b></span>
+        <span>Accesibilidad</span><span class="dots risk" aria-label="riesgo 3 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b></b><b></b></span>
+        <span>Claridad para no técnicos</span><span class="dots risk" aria-label="riesgo 4 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b></b></span>
+      </div>
+      <p style="margin-top:12px;font-size:.92rem;color:var(--muted)">4 a 6 semanas. Tu GitHub público muestra poco del trabajo de empresa (es privado), así que la ciudad saldría baja en 2025-2026. Hay que contarlo o mezclar con datos propios.</p>
+    </div>
+    <div class="full">
+      <h3>Referencias</h3>
+      <div class="refs">
+        <a href="https://tympanus.net/codrops/2026/01/28/webgpu-gommage-effect-dissolving-msdf-text-into-dust-and-petals-with-three-js-tsl/">Codrops: texto MSDF que se disuelve en polvo con WebGPU</a>
+        <a href="https://tympanus.net/codrops/2025/02/17/implementing-a-dissolve-effect-with-shaders-and-particles-in-three-js/">Codrops: disolución con shaders y partículas en three.js</a>
+        <a href="https://webflow.com/made-in-webflow/website/gsap-disintegration-effect-on-scroll">Webflow: efecto de desintegración con scroll (GSAP + html2canvas)</a>
+        <a href="https://github.com/honzaap/GithubCity">GithubCity: el grafo de contribuciones como ciudad 3D</a>
+        <a href="https://joyofcode.xyz/threlte-github-skyline">Joy of Code: tutorial del grafo de GitHub en 3D</a>
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- CONCEPTO 3 -->
+<article class="concept" id="c3">
+  <div class="c-head">
+    <div class="stack">
+      <span class="tag">Concepto 3</span>
+      <h2>NicoOS, un escritorio para explorar</h2>
+      <p>El sitio es un sistema operativo retro de los 90 en el navegador: ventanas, íconos, una papelera, una terminal y un minijuego. No hay scroll: se explora abriendo cosas. Es el formato donde la gente más «se queda jugando».</p>
+    </div>
+    <div class="demo d3" tabindex="0" aria-label="Miniatura: una ventana de terminal retro que escribe un comando">
+      <div class="win">
+        <div class="bar3"><span>terminal.exe</span><i></i></div>
+        <div class="term"><span>nico@os</span>:~$ <span class="typed">./proyectos.sh</span><span class="cur"></span><br>8 sistemas en producción</div>
+      </div>
+      <span class="hint">pasa el cursor ›</span>
+    </div>
+  </div>
+  <div class="c-body">
+    <div>
+      <h3>Recorrido (por ventanas)</h3>
+      <ol class="scroll">
+        <li><span><b>Arranque.</b> Pantalla de inicio de 2 segundos que se puede saltar, y aparece el escritorio con una ventana ya abierta: «Léeme primero» con tu resumen y el CV.</span></li>
+        <li><span><b>Carpeta Proyectos.</b> Un archivo por sistema; al abrirlo, una ficha con capturas, problema y resultado.</span></li>
+        <li><span><b>Terminal.</b> Comandos para quien programa: <code>cat tacano.md</code>, <code>hedera --logros</code>.</span></li>
+        <li><span><b>Juego.</b> Un minijuego corto (por ejemplo, ordenar 600 documentos de papel antes de que se acabe el tiempo) que explica tu sistema de calidad jugando.</span></li>
+        <li><span><b>Correo.</b> Una ventana de mensaje para escribirte.</span></li>
+      </ol>
+    </div>
+    <div class="stack" style="gap:24px">
+      <div>
+        <h3>Interacciones que retienen</h3>
+        <ul class="plain">
+          <li>Arrastrar, minimizar y cerrar ventanas; cambiar el fondo.</li>
+          <li>Huevos de pascua: la papelera tiene «versiones viejas» de tu portafolio.</li>
+          <li>Un minijuego con récord guardado en el navegador.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Paleta «plástico beige»</h3>
+        <div class="swatches">
+          <div class="sw"><i style="background:#D9D4C7"></i><span>Base · escritorio y marcos</span><span class="mono">#D9D4C7 · 60 %</span></div>
+          <div class="sw"><i style="background:#1E1E24"></i><span>Secundario · ventanas, texto, sombras duras</span><span class="mono">#1E1E24 · 30 %</span></div>
+          <div class="sw"><i style="background:#C2311F"></i><span>Acento · botones, notificaciones</span><span class="mono">#C2311F · 10 %</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Stack</h3>
+      <ul class="plain">
+        <li><b>Vue 3 + Vite</b> (tu stack de todos los días); ventanas con <code>vue-draggable</code> o lógica propia.</li>
+        <li>Terminal con xterm.js o un componente propio sencillo.</li>
+        <li>Opcional: el escritorio dentro de un monitor CRT en three.js, como Henry Heffernan.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Esfuerzo y riesgo</h3>
+      <div class="meters">
+        <span>Esfuerzo</span><span class="dots" aria-label="3 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b></b><b></b></span>
+        <span>Rendimiento móvil</span><span class="dots risk" aria-label="riesgo 2 de 5"><b class="on"></b><b class="on"></b><b></b><b></b><b></b></span>
+        <span>Accesibilidad</span><span class="dots risk" aria-label="riesgo 4 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b></b></span>
+        <span>Claridad para no técnicos</span><span class="dots risk" aria-label="riesgo 3 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b></b><b></b></span>
+      </div>
+      <p style="margin-top:12px;font-size:.92rem;color:var(--muted)">3 a 4 semanas. Las ventanas arrastrables son incómodas en celular: allí habría que mostrar una versión tipo lista. El acento rojo no sirve para texto pequeño (contraste 3,8:1), solo para botones.</p>
+    </div>
+    <div class="full">
+      <h3>Referencias</h3>
+      <div class="refs">
+        <a href="https://henryheffernan.com">Henry Heffernan: escritorio de Windows dentro de un monitor 3D</a>
+        <a href="https://discourse.threejs.org/t/a-low-poly-room-where-you-fly-into-the-crt/92694">Foro three.js: cuarto low-poly donde vuelas dentro del CRT</a>
+        <a href="https://subhayu99.github.io">Subhayu: portafolio terminal con temas y comandos</a>
+        <a href="https://github.com/k0msenapati/terminalfolio">TermFolio: plantilla de terminal configurable por JSON</a>
+      </div>
+    </div>
+  </div>
+</article>
+
+<!-- CONCEPTO 4 -->
+<article class="concept" id="c4">
+  <div class="c-head">
+    <div class="stack">
+      <span class="tag">Concepto 4</span>
+      <h2>La cadena de bloques de tu carrera</h2>
+      <p>Una línea de tiempo horizontal donde cada hito es un bloque encadenado al anterior, con su «hash» y su fecha. Conecta con tu identidad Web3 sin exigir saber qué es Hedera. Es la opción clara, liviana y rápida de construir.</p>
+    </div>
+    <div class="demo d4" tabindex="0" aria-label="Miniatura: bloques encadenados del 2021 al 2026; el último se resalta">
+      <div class="chain">
+        <div class="blk"><b>2021</b>primer código</div><span class="lnk"></span>
+        <div class="blk"><b>3,5 años</b>enseñando</div><span class="lnk"></span>
+        <div class="blk"><b>2025</b>práctica</div><span class="lnk"></span>
+        <div class="blk"><b>2026</b>ETHDenver</div><span class="lnk"></span>
+        <div class="blk"><b>2027</b>tu equipo</div>
+      </div>
+      <span class="hint">pasa el cursor ›</span>
+    </div>
+  </div>
+  <div class="c-body">
+    <div>
+      <h3>Recorrido de scroll</h3>
+      <ol class="scroll">
+        <li><span><b>Bloque génesis.</b> Tu presentación en una frase y el CV.</span></li>
+        <li><span><b>Scroll vertical, movimiento horizontal.</b> La página avanza de lado por los bloques 2021 → 2026; cada uno se «valida» con una animación corta al llegar.</span></li>
+        <li><span><b>Transacciones dentro del bloque.</b> Abrir un bloque muestra sus proyectos, con capturas y resultados.</span></li>
+        <li><span><b>Siguiente bloque: pendiente.</b> Un bloque vacío que dice «2027: tu equipo» y lleva al contacto.</span></li>
+      </ol>
+    </div>
+    <div class="stack" style="gap:24px">
+      <div>
+        <h3>Interacciones que retienen</h3>
+        <ul class="plain">
+          <li>Arrastrar la cadena con el mouse o el dedo.</li>
+          <li>«Minar» el bloque final: mantener presionado un botón para desbloquear tu correo.</li>
+          <li>Filtro por tema (IA, Web3, sistemas en producción) que ilumina solo esos bloques.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Paleta «registro»</h3>
+        <div class="swatches">
+          <div class="sw"><i style="background:#EEF1F5"></i><span>Base · fondo claro frío</span><span class="mono">#EEF1F5 · 60 %</span></div>
+          <div class="sw"><i style="background:#121826"></i><span>Secundario · texto, bordes de bloques</span><span class="mono">#121826 · 30 %</span></div>
+          <div class="sw"><i style="background:#2D5BFF"></i><span>Acento · bloque activo, CTA</span><span class="mono">#2D5BFF · 10 %</span></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>Stack</h3>
+      <ul class="plain">
+        <li><b>Astro</b> + GSAP ScrollTrigger (scroll horizontal fijado) o animaciones CSS ligadas al scroll.</li>
+        <li>Sin 3D: SVG y CSS, así carga en menos de un segundo.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Esfuerzo y riesgo</h3>
+      <div class="meters">
+        <span>Esfuerzo</span><span class="dots" aria-label="2 de 5"><b class="on"></b><b class="on"></b><b></b><b></b><b></b></span>
+        <span>Rendimiento móvil</span><span class="dots risk" aria-label="riesgo 1 de 5"><b class="on"></b><b></b><b></b><b></b><b></b></span>
+        <span>Accesibilidad</span><span class="dots risk" aria-label="riesgo 1 de 5"><b class="on"></b><b></b><b></b><b></b><b></b></span>
+        <span>Efecto «wow»</span><span class="dots risk" aria-label="riesgo de quedarse corto 3 de 5"><b class="on"></b><b class="on"></b><b class="on"></b><b></b><b></b></span>
+      </div>
+      <p style="margin-top:12px;font-size:.92rem;color:var(--muted)">2 a 3 semanas. Es el más seguro, pero el menos memorable: se parece a muchas líneas de tiempo que ya existen.</p>
+    </div>
+    <div class="full">
+      <h3>Referencias</h3>
+      <div class="refs">
+        <a href="https://tympanus.net/codrops/2025/11/04/creating-3d-scroll-driven-text-animations-with-css-and-gsap/">Codrops: animaciones de texto 3D ligadas al scroll con CSS y GSAP</a>
+        <a href="https://gsap.com/docs/v3/Plugins/ScrollTrigger">Documentación de GSAP ScrollTrigger (fijar secciones, scrub, scroll horizontal)</a>
+        <a href="https://tympanus.net/codrops/2026/06/11/sketching-the-impossible-a-3d-portfolio-built-without-a-single-3d-model/">Codrops: un portafolio que parece 3D sin un solo modelo 3D</a>
+      </div>
+    </div>
+  </div>
+</article>
+
+<section class="stack">
+  <span class="eyebrow">Comparación</span>
+  <h2>Los cuatro, lado a lado</h2>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Concepto</th><th>Se entiende sin ser técnico</th><th>Hace quedarse</th><th>Riesgo en móvil</th><th>Tiempo (medio tiempo)</th><th>Muestra tu perfil real</th></tr></thead>
+      <tbody>
+        <tr><td><b>1 · Computador que se desarma</b></td><td class="y">Muy bien</td><td>Alto</td><td>Alto (con plan B)</td><td class="mono">5–7 sem</td><td>Full-stack completo</td></tr>
+        <tr><td><b>2 · Repo que se desintegra</b></td><td>Regular</td><td>Alto</td><td>Medio</td><td class="mono">4–6 sem</td><td>Código y open source</td></tr>
+        <tr><td><b>3 · NicoOS</b></td><td>Bien</td><td class="y">Muy alto</td><td>Bajo, pero incómodo</td><td class="mono">3–4 sem</td><td>Creatividad y producto</td></tr>
+        <tr><td><b>4 · Cadena de bloques</b></td><td class="y">Muy bien</td><td>Medio</td><td>Muy bajo</td><td class="mono">2–3 sem</td><td>Trayectoria y Web3</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="stack">
+  <span class="eyebrow">Recomendación</span>
+  <h2>«Del producto al código»: el 1 con el corazón del 2</h2>
+  <div class="prose stack">
+    <p>El computador que se desarma es la metáfora más fácil de leer para un reclutador: lo ve y entiende que conoces todas las piezas. La desintegración del concepto 2 la usaría en un solo momento, el de la pantalla, donde tus sistemas se convierten en su código. Así cada efecto explica algo, en vez de decorar. La terminal del concepto 3 queda como secreto con <code>Ctrl + K</code> para los técnicos.</p>
+    <p>Para no arriesgar el objetivo de conseguir trabajo, lo construiría por fases. Cada fase deja algo publicable, así no dependes del 3D para tener portafolio en línea.</p>
+  </div>
+  <div class="phases">
+    <div class="phase"><span class="eyebrow">Fase 1 · 2 semanas</span><h3>Sitio claro y rápido</h3><p>Todo el contenido en HTML, paleta, tipografía y animaciones suaves de entrada. Ya sirve para postular.</p></div>
+    <div class="phase"><span class="eyebrow">Fase 2 · 2–3 semanas</span><h3>El computador 3D</h3><p>Modelo por piezas, desarmado con scroll, plan B de imágenes para celular.</p></div>
+    <div class="phase"><span class="eyebrow">Fase 3 · 1–2 semanas</span><h3>Pantalla que se vuelve código</h3><p>Desintegración de las capturas en código real; contador de tacano.</p></div>
+    <div class="phase"><span class="eyebrow">Fase 4 · 1 semana</span><h3>Secretos</h3><p>Terminal con <code>Ctrl + K</code>, sonido opcional, versión en inglés.</p></div>
+  </div>
+</section>
+
+<section class="stack">
+  <span class="eyebrow">Reglas para que lo espectacular no estorbe</span>
+  <h2>Presupuesto técnico</h2>
+  <div class="budget">
+    <div><b>&lt; 2,5 s</b><span>hasta ver nombre y rol (LCP), con el 3D cargando después</span></div>
+    <div><b>&lt; 3 MB</b><span>modelo 3D comprimido con todas sus texturas</span></div>
+    <div><b>1,5×</b><span>resolución máxima del lienzo 3D en pantallas retina, para no quemar la batería</span></div>
+    <div><b>4,5 : 1</b><span>contraste mínimo de todo texto; el acento solo en botones y cifras grandes</span></div>
+  </div>
+  <ul class="plain prose">
+    <li>Con «reducir movimiento» activado en el sistema, el sitio muestra el computador ya desarmado y quieto.</li>
+    <li>Todo el texto es HTML real: si WebGL falla, el sitio sigue completo.</li>
+    <li>Un enlace fijo «Descargar CV» visible en todo momento.</li>
+    <li>Nada se esconde detrás de una animación: el scroll embellece, no condiciona.</li>
+  </ul>
+</section>
+
+<section class="stack">
+  <span class="eyebrow">Lo que te toca decidir</span>
+  <h2>Tres preguntas para arrancar</h2>
+  <ol class="qs prose">
+    <li>¿Cuál concepto (o la mezcla recomendada)?</li>
+    <li>¿Astro + three.js, o prefieres Vue 3 + TresJS para trabajar en tu stack de siempre?</li>
+    <li>¿El modelo 3D lo hacemos en Blender, o compramos uno de un portátil y lo adaptamos?</li>
+  </ol>
+</section>
+
+<section class="stack">
+  <span class="eyebrow">Fuentes consultadas</span>
+  <div class="sources">
+    <a href="https://www.awwwards.com/inspiration_search/winner_category_portfolio/">Awwwards: portafolios premiados</a>
+    <a href="https://www.awwwards.com/brunos-portfolio-case-study.html">Awwwards: caso de estudio del portafolio de Bruno Simon</a>
+    <a href="https://bruno-simon.com">bruno-simon.com</a>
+    <a href="https://www.awwwards.com/sites/jesses-ramen-portfolio">Awwwards: portafolio ramen de Jesse Zhou</a>
+    <a href="https://zerotomastery.io/about/instructor/jesse-zhou">Zero to Mastery: biografía de Jesse Zhou</a>
+    <a href="https://godly.website">Godly: galería de sitios con animación</a>
+    <a href="https://tympanus.net/codrops/2025/11/05/animating-a-3d-scene-with-splines-new-timeline-tool/">Codrops: animar una escena con la línea de tiempo de Spline</a>
+    <a href="https://tympanus.net/codrops/2018/04/25/particle-effects-for-buttons/">Codrops: efectos de partículas para botones</a>
+    <a href="https://www.utsubo.com/blog/threejs-2026-what-changed">Qué cambió en three.js en 2026 (WebGPU)</a>
+    <a href="https://dev.to/sathishk-dev/i-built-a-terminal-style-portfolio-that-feels-like-a-real-cli-ed">DEV: portafolio estilo terminal</a>
+    <a href="https://hype4.academy/articles/design/60-30-10-rule-in-ui">Hype4: la regla 60-30-10 en UI</a>
+    <a href="https://visionaustralia.org/business-consulting/digital-access/Creating-accessible-digital-colour-palettes-60-30-10-design-rule">Vision Australia: paletas accesibles con 60-30-10</a>
+    <a href="https://uxdesign.cc/ever-wonder-how-recruiters-look-at-your-design-portfolio-cc8dd1ecb698">UX Collective: cómo miran los reclutadores un portafolio</a>
+    <a href="https://www.hiration.com/blog/how-long-recruiters-spend-on-resume/">Hiration: cuánto tiempo pasan en una hoja de vida</a>
+  </div>
+</section>
+
+<footer>Investigación hecha el 10 de noviembre de 2026. Los tiempos son estimados para trabajar a medio tiempo, al lado de un empleo. Nada de esto está construido todavía.</footer>
+</div>
+
+<script>
+(function(){
+  var g=document.getElementById('grid2'); if(!g) return;
+  var cls=['','','a','','b','a','','','a','b','','a','',''];
+  for(var i=0;i<70;i++){
+    var b=document.createElement('b');
+    var r=(i*37)%14; var c=cls[r]; if(c) b.className=c;
+    b.style.setProperty('--dx',(((i*53)%120)-60)+'px');
+    b.style.setProperty('--dy',(((i*29)%90)-45)+'px');
+    g.appendChild(b);
+  }
+})();
+</script>
