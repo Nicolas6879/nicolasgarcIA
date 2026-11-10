@@ -50,8 +50,9 @@ RES = (1280, 800)
 HEX = {
     "aluminio": "#D7DCE4",
     "grafito": "#161B26",
-    "interno": "#2A3140",
+    "interno": "#343C4D",
     "acento": "#FF7A45",
+    "pistas": "#FF7A45",
     "pantalla": "#0E121A",
     "pantalla_emi": "#1E2A3A",
 }
@@ -69,13 +70,13 @@ LID_NRM = Vector((1, 0, 0)).cross(LID_DIR)
 # Offsets de explosion (Blender, metros)
 EXPLODE = {
     "chasis": (0.0, 0.0, 0.0),
-    "bateria": (0.0, -0.09, -0.06),
-    "placa": (0.0, 0.03, 0.06),
-    "cpu": (0.0, -0.25, 0.10),
-    "disco": (-0.17, 0.03, 0.06),
-    "antena": (0.0, 0.06, 0.04),
-    "teclado": (0.0, -0.04, 0.21),
-    "tapa": (0.0, 0.12, 0.27),
+    "bateria": (0.0, -0.10, -0.07),
+    "placa": (0.0, 0.05, 0.07),
+    "cpu": (0.0, -0.26, 0.10),
+    "disco": (-0.20, 0.04, 0.07),
+    "antena": (0.0, 0.07, 0.05),
+    "teclado": (0.0, -0.02, 0.40),
+    "tapa": (0.0, 0.13, 0.50),
 }
 # la pantalla flota por delante de la tapa (a lo largo de la normal de la pantalla)
 _p = Vector(EXPLODE["tapa"]) + LID_NRM * 0.06
@@ -122,6 +123,7 @@ MATS = {
     "grafito": make_material("grafito", HEX["grafito"], 0.0, 0.6),
     "interno": make_material("interno", HEX["interno"], 0.0, 0.7),
     "acento": make_material("acento", HEX["acento"], 0.0, 0.5, HEX["acento"], 2.0),
+    "pistas": make_material("pistas", HEX["pistas"], 0.0, 0.5, HEX["pistas"], 0.6),
     "pantalla": make_material("pantalla", HEX["pantalla"], 0.0, 0.2, HEX["pantalla_emi"], 0.5),
 }
 
@@ -169,16 +171,20 @@ class Builder:
         self._commit(tb, mat, M, uv_fn, "x" if uv_fn else None)
         tb.free()
 
-    def cyl_x(self, c, r, length, mat, segs=12, M=None):
-        """Cilindro con eje X (barril de la bisagra)."""
+    def cyl(self, c, r, length, mat, segs=12, axis="X", M=None):
+        """Cilindro con eje X o Z."""
         tb = bmesh.new()
         bmesh.ops.create_cone(tb, cap_ends=True, cap_tris=False, segments=segs, radius1=r, radius2=r,
                               depth=length, calc_uvs=False)
-        bmesh.ops.rotate(tb, cent=(0, 0, 0), matrix=Matrix.Rotation(math.radians(90), 3, "Y"), verts=tb.verts)
+        if axis == "X":
+            bmesh.ops.rotate(tb, cent=(0, 0, 0), matrix=Matrix.Rotation(math.radians(90), 3, "Y"), verts=tb.verts)
         bmesh.ops.translate(tb, vec=Vector(c), verts=tb.verts)
         bmesh.ops.recalc_face_normals(tb, faces=tb.faces)
         self._commit(tb, mat, M)
         tb.free()
+
+    def cyl_x(self, c, r, length, mat, segs=12, M=None):
+        self.cyl(c, r, length, mat, segs, "X", M)
 
 
 def finish(name, b):
@@ -290,58 +296,136 @@ def build_teclado():
     return finish("teclado", b)
 
 
-PCB = dict(x=0.0, y0=-0.012, y1=0.088, hx=0.145, z0=0.0040, t=0.0016)
+PCB = dict(z0=0.0040, t=0.0016)
 PCB_TOP = PCB["z0"] + PCB["t"]
-CPU_XY = (0.05, 0.04)
-DISCO_XY = (-0.06, 0.045)
+CPU_XY = (0.02, 0.04)
+FAN_XY = (0.11, 0.052)
+FAN_R = 0.031
+DISCO_XY = (-0.075, 0.04)
+
+
+def rotz(c, ang):
+    return Matrix.Translation(Vector(c)) @ Matrix.Rotation(ang, 4, "Z")
 
 
 def build_placa():
-    b = Builder(["interno"])
-    yc = (PCB["y0"] + PCB["y1"]) / 2
-    b.box((0, yc, PCB["z0"] + PCB["t"] / 2), (2 * PCB["hx"], PCB["y1"] - PCB["y0"], PCB["t"]), "interno", bev=0.0004)
-    comps = [  # (x, y, sx, sy, alto)
-        (0.11, 0.07, 0.018, 0.012, 0.003), (0.12, 0.02, 0.012, 0.012, 0.0025),
-        (-0.10, 0.012, 0.016, 0.010, 0.002), (-0.12, 0.07, 0.010, 0.008, 0.0022),
-        (0.0, 0.075, 0.022, 0.008, 0.0028), (0.0, 0.0, 0.014, 0.010, 0.002),
-        (0.085, -0.002, 0.008, 0.006, 0.0018), (-0.03, 0.078, 0.008, 0.008, 0.0024),
-        (0.10, 0.045, 0.006, 0.006, 0.003), (-0.07, 0.008, 0.012, 0.006, 0.0016),
+    b = Builder(["interno", "grafito", "aluminio", "pistas"])
+    t, z0 = PCB["t"], PCB["z0"]
+    zc = z0 + t / 2
+    # placa en L: cuerpo principal + extension frontal derecha (hueco para el ventilador)
+    b.box((-0.035, 0.038, zc), (0.220, 0.100, t), "interno", bev=0.0004)
+    b.box((0.110, 0.0015, zc), (0.070, 0.027, t), "interno", bev=0.0004)
+
+    def top(x, y, sx, sy, h, mat, bev=0.0003):
+        b.box((x, y, PCB_TOP + h / 2), (sx, sy, h), mat, bev=bev)
+
+    # RAM: fila de chips + escudo
+    for x in (-0.105, -0.080, -0.055, -0.030):
+        top(x, 0.072, 0.020, 0.012, 0.0013, "grafito")
+    top(0.040, 0.075, 0.014, 0.014, 0.0020, "aluminio")
+    # SMD: tres filas de pasivos
+    for i in range(6):
+        top(-0.095 + i * 0.007, 0.012, 0.0035, 0.0018, 0.0009, "aluminio" if i % 2 else "grafito", 0)
+    for i in range(5):
+        top(0.012 + i * 0.007, 0.010, 0.0035, 0.0018, 0.0009, "grafito" if i % 2 else "aluminio", 0)
+    for i in range(4):
+        top(0.047 + i * 0.007, 0.060, 0.0035, 0.0018, 0.0009, "aluminio" if i % 2 else "grafito", 0)
+    # conectores (headers) con pines
+    for x, y, sx, sy, h in ((-0.090, -0.001, 0.035, 0.007, 0.004), (0.040, 0.000, 0.020, 0.007, 0.004),
+                            (0.125, 0.003, 0.018, 0.008, 0.004)):
+        top(x, y, sx, sy, h, "grafito")
+        top(x, y, sx - 0.004, sy * 0.4, h + 0.0006, "aluminio", 0)
+    # agujeros de montaje (anillos)
+    for x, y in ((-0.137, -0.004), (0.065, -0.004), (-0.137, 0.080), (0.065, 0.082), (0.138, -0.004)):
+        b.cyl((x, y, PCB_TOP + 0.0003), 0.0035, 0.0006, "aluminio", segs=10, axis="Z")
+        b.cyl((x, y, PCB_TOP + 0.0006), 0.0018, 0.0010, "grafito", segs=8, axis="Z")
+    # pistas (lineas finas en relieve)
+    w, h = 0.0008, 0.0003
+    segs = [  # (x0, y0, x1, y1)
+        (-0.040, 0.050, 0.002, 0.050), (-0.040, 0.050, -0.040, 0.066),
+        (-0.120, 0.000, -0.120, 0.025), (-0.120, 0.025, -0.045, 0.025),
+        (0.050, 0.004, 0.050, 0.028), (0.050, 0.028, 0.072, 0.028),
+        (-0.130, 0.030, -0.130, 0.062), (0.020, 0.018, 0.020, 0.006),
+        (0.010, 0.060, 0.034, 0.060), (0.034, 0.060, 0.034, 0.068),
     ]
-    for x, y, sx, sy, h in comps:
-        b.box((x, y, PCB_TOP + h / 2), (sx, sy, h), "interno", bev=0.0004)
+    for x0, y0, x1, y1 in segs:
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        b.box((cx, cy, PCB_TOP + h / 2), (abs(x1 - x0) + w, abs(y1 - y0) + w, h), "pistas", bev=0)
     return finish("placa", b)
 
 
 def build_cpu():
-    b = Builder(["interno", "acento"])
+    """Procesador + sistema de enfriamiento (heatpipe + ventilador)."""
+    b = Builder(["interno", "acento", "aluminio", "grafito"])
     x, y = CPU_XY
     b.box((x, y, PCB_TOP + 0.00085), (0.035, 0.035, 0.0017), "interno", bev=0.0005)
     b.box((x, y, PCB_TOP + 0.0017 + 0.0006), (0.026, 0.026, 0.0012), "acento", bev=0.0004)
+    # heatpipes hacia el ventilador
+    x0, x1 = x + 0.013, FAN_XY[0] - 0.022
+    for dy in (-0.004, 0.004):
+        b.cyl(((x0 + x1) / 2, y + dy, 0.0078), 0.0022, x1 - x0, "aluminio", segs=8, axis="X")
+    # ventilador: base, pared, buje y aspas
+    fx, fy = FAN_XY
+    b.cyl((fx, fy, 0.00375), FAN_R, 0.0015, "aluminio", segs=24, axis="Z")
+    n = 16
+    side = 2 * math.pi * FAN_R / n * 1.1
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        b.box((FAN_R, 0, 0.0075), (0.0012, side, 0.006), "aluminio", bev=0, M=rotz((fx, fy, 0), a))
+    b.cyl((fx, fy, 0.0065), 0.006, 0.004, "grafito", segs=12, axis="Z")
+    nb = 9
+    for i in range(nb):
+        a = 2 * math.pi * i / nb
+        b.box((0.0125, 0, 0.0062), (0.0135, 0.0055, 0.0009), "grafito", bev=0, M=rotz((fx, fy, 0), a + 0.35))
     return finish("cpu", b)
 
 
 def build_bateria():
-    b = Builder(["interno"])
-    for sx in (-1, 1):
-        b.box((sx * 0.072, -0.060, 0.003 + 0.00225), (0.135, 0.082, 0.0045), "interno", bev=0.001, seg=2)
+    b = Builder(["interno", "aluminio", "grafito"])
+    cw, gap, depth = 0.068, 0.003, 0.078
+    x_start = -(4 * cw + 3 * gap) / 2
+    yc = -0.066
+    for i in range(4):
+        xc = x_start + cw / 2 + i * (cw + gap)
+        b.box((xc, yc, 0.003 + 0.00225), (cw, depth, 0.0045), "interno", bev=0.0008, seg=2)
+        b.box((xc, yc, 0.0075 + 0.0002), (0.050, 0.016, 0.0004), "aluminio", bev=0)
+    # conector + cable hacia la placa
+    b.box((0.0, -0.0285, 0.0045), (0.014, 0.006, 0.003), "grafito", bev=0.0003)
+    b.box((0.0, -0.0205, 0.0036), (0.005, 0.012, 0.0010), "grafito", bev=0)
     return finish("bateria", b)
 
 
 def build_disco():
-    b = Builder(["interno"])
+    b = Builder(["interno", "grafito", "aluminio"])
     x, y = DISCO_XY
-    b.box((x, y, PCB_TOP + 0.0007), (0.060, 0.022, 0.0014), "interno", bev=0.0004)
-    for dx in (-0.016, 0.0, 0.016):
-        b.box((x + dx, y, PCB_TOP + 0.0014 + 0.0005), (0.011, 0.014, 0.001), "interno", bev=0.0003)
+    z = PCB_TOP + 0.0007
+    b.box((x, y, z), (0.060, 0.022, 0.0014), "interno", bev=0.0004)
+    zt = PCB_TOP + 0.0014
+    for dx, sx in ((-0.010, 0.014), (0.008, 0.014), (0.024, 0.006)):  # 2 NAND + controlador
+        b.box((x + dx, y, zt + 0.0005), (sx, 0.014 if sx > 0.01 else 0.009, 0.001), "grafito", bev=0.0003)
+    # contactos (aluminio) con muesca
+    for dy in (-0.0065, 0.0065):
+        b.box((x - 0.0285, y + dy, z), (0.004, 0.0075, 0.0016), "aluminio", bev=0)
+    # media luna del tornillo
+    b.cyl((x + 0.030, y, z + 0.0003), 0.0035, 0.0018, "aluminio", segs=10, axis="Z")
     return finish("disco", b)
 
 
 def build_antena():
-    b = Builder(["interno", "acento"])
+    b = Builder(["interno", "acento", "grafito"])
     for sx in (-1, 1):
         x, y, z = sx * 0.12, 0.098, 0.0075
         b.box((x, y, z), (0.050, 0.004, 0.0015), "interno", bev=0.0003)
         b.box((x, y, z + 0.0015 / 2 + 0.0002), (0.040, 0.0008, 0.0004), "acento", bev=0)
+        # cable hacia la tarjeta Wi-Fi
+        xe = sx * 0.095
+        xc = sx * 0.0115
+        b.box(((xe + xc) / 2, 0.0985, z), (abs(xe - xc), 0.0012, 0.0008), "grafito", bev=0)
+    # tarjeta Wi-Fi cuadrada entre las antenas
+    b.box((0.0, 0.0965, 0.0075), (0.024, 0.012, 0.0018), "interno", bev=0.0003)
+    b.box((0.0, 0.0965, 0.0075 + 0.0014), (0.014, 0.008, 0.001), "grafito", bev=0.0003)
+    for sx in (-1, 1):
+        b.box((sx * 0.0105, 0.0965, 0.0075 + 0.0012), (0.002, 0.002, 0.0006), "acento", bev=0)
     return finish("antena", b)
 
 
@@ -500,6 +584,7 @@ def add_area(name, loc, target, energy, size):
 add_area("luz_key", (-0.55, -0.55, 0.70), (0, 0, 0.1), 12, 0.7)
 add_area("luz_relleno", (0.70, -0.45, 0.35), (0, 0, 0.1), 7, 0.8)
 add_area("luz_contra", (0.25, 0.75, 0.70), (0, 0, 0.1), 14, 0.7)
+add_area("luz_rim", (-0.6, 0.6, 0.5), (0, 0, 0.1), 25, 0.5)
 add_area("luz_arriba", (0.0, 0.0, 1.0), (0, 0, 0.1), 2, 0.9)
 
 CAM_DIR = Vector((-0.55, -0.62, 0.60)).normalized()
