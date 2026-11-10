@@ -1,0 +1,172 @@
+% CV publico del portafolio (ES). Copia de empleo-agente/salidas/aplicaciones/_cv_base/es/cv.tex.
+% Sin nombre de la empresa, sin telefono y sin el abrepuertas (es publico en la web).
+% Sin guiones largos (---) a proposito; "--" solo en rangos de fechas.
+\documentclass[a4paper,10pt]{article}
+\usepackage[top=0.6in, bottom=0.6in, left=0.7in, right=0.7in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{needspace}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage[dvipsnames]{xcolor}
+\definecolor{acc}{HTML}{1F3A5F}
+\usepackage[colorlinks=true,urlcolor=acc,linkcolor=acc,bookmarks=false,
+  pdfauthor={Juan Nicolás García Vega},pdftitle={CV Juan Nicolás García Vega}]{hyperref}
+
+\pagestyle{empty}
+\raggedright
+\hyphenpenalty=10000 \exhyphenpenalty=10000
+\emergencystretch=3em
+\clubpenalty=10000 \widowpenalty=10000
+
+\setlist[itemize,1]{leftmargin=1em,   itemsep=3pt,   parsep=0pt, topsep=2pt,   label=\textbullet}
+\setlist[itemize,2]{leftmargin=1.4em, itemsep=1.5pt, parsep=0pt, topsep=1.5pt, label=\textendash}
+\titleformat{\section}{\large\bfseries\uppercase}{}{0em}{}[\vspace{0.1em}\titlerule]
+\titlespacing{\section}{0pt}{0.8em}{0.5em}
+\newcommand{\entry}[3]{\textbf{#1}\ifx&#2&\else, \textit{#2}\fi \hfill \mbox{\textit{#3}}}
+\newcommand{\gh}[1]{\href{https://github.com/Nicolas6879/#1}{github.com/Nicolas6879/#1}}
+
+\begin{document}
+
+\begin{center}
+    {\huge \textbf{Juan Nicolás García Vega}} \\[0.3em]
+    Ingeniero Full-Stack \textbar{} Vue, React, Laravel, Node.js y Python \\[0.35em]
+    Bucaramanga, Colombia \textperiodcentered{} Disponible para reubicación o remoto \\
+    \href{mailto:jngv08@gmail.com}{jngv08@gmail.com} \textperiodcentered{}
+    \href{https://www.linkedin.com/in/juan-nicolas-garcia-vega}{linkedin.com/in/juan-nicolas-garcia-vega} \textperiodcentered{}
+    \href{https://github.com/Nicolas6879}{github.com/Nicolas6879}
+\end{center}
+
+\needspace{6\baselineskip}
+\section*{Perfil}
+Ingeniero full-stack (Ingeniería de Sistemas, julio de 2026) que ha llevado
+\textbf{8 sistemas a producción} en una empresa industrial colombiana con Vue 3, TypeScript, Laravel y SQL Server, entre
+ellos un \textbf{sistema de gestión de calidad ISO 9001 que reemplazó más de 600 documentos en
+papel}. Construye aplicaciones web de extremo a extremo, APIs REST y herramientas con IA (MCP,
+un plugin para Claude Code), con pruebas automáticas. \textbf{Hedera Developer \& Community
+Ambassador en Colombia}; \textbf{primer lugar} en el CTF Web3 de Hedera DevDay y \textbf{segundo
+lugar} en el bounty de automatización on-chain, ETHDenver 2026.
+
+\needspace{6\baselineskip}
+\section*{Experiencia profesional}
+\begin{itemize}
+    \item \entry{Ingeniero de Software}{Empresa industrial, Colombia}{Abr.\ 2026 -- Presente}
+        \begin{itemize}
+            \item Lidero de punta a punta la transición a \textbf{operaciones sin papel}: diseño
+                y construyo los sistemas, entre ellos la aplicación de expedientes digitales
+                (PDFs escaneados, archivados y firmados) y, además, reestructuré y completé el
+                sistema anterior de adjuntos (PDFs generados por el ERP, antes manejados a mano).
+            \item Construí un \textbf{servidor MCP} para buscar en los catálogos del SGC
+                (Sistema de Gestión de Calidad) y \textbf{publicar documentos de calidad desde
+                Claude}, para que la gente deje de saltarse el paso de subirlos.
+            \item Mantengo y extiendo el \textbf{ERP} (Visual Basic, SQL Server), que usan unas
+                \textbf{100 personas}.
+            \item Hago parte del equipo que construye un \textbf{asistente de IA} interno
+                (Gemini API, migrando a Claude) para el conocimiento de la empresa y los reportes.
+            \item Entregué \textbf{Preoperacionales} (listas de chequeo de equipos en 3 sedes,
+                modo sin conexión con sincronización automática), \textbf{ComidApp} (pedidos y
+                costeo multiplanta), un portal de tableros \textbf{Power BI}, un formulario de
+                debida diligencia de terceros para \textbf{SAGRILAFT} (normas colombianas contra
+                el lavado de activos) con salida en PDF, y la migración completa de un sistema
+                en \textbf{C\#} a Vue 3, Laravel y SQL Server.
+        \end{itemize}
+
+    \item \entry{Practicante de Ingeniería de Sistemas}{Empresa industrial, Colombia}{Ago.\ 2025 -- Abr.\ 2026}
+        \begin{itemize}
+            \item Construí desde cero el \textbf{Sistema de Gestión de Calidad ISO 9001}
+                (trabajo de grado), de uso diario en \textbf{3 áreas}, que reemplazó
+                \textbf{más de 600 documentos en papel}. Seis módulos: documentos, indicadores,
+                auditorías, riesgos, acciones CAPA y no conformidades, gestión del cambio.
+                Vue 3, TypeScript, Pinia, Laravel, MySQL.
+        \end{itemize}
+
+    \item \entry{Developer \& Community Ambassador, Colombia}{Hedera}{2025 -- Presente}
+        \begin{itemize}
+            \item Organicé, dicté y fui jurado de \textit{Descifra Hedera: Charla y Hackathon
+                Web3} (29 sep.\ 2026, U26 Fest, Universidad Industrial de Santander): 3 horas,
+                unas \textbf{90 personas}.
+            \item Dicté dos talleres virtuales: el arranque local del \textbf{Hedera APEX
+                Hackathon} para México (26 feb.\ 2026, 3 h) y la incorporación de estudiantes de
+                dos colegios de comunidades vulnerables de Brasil al Hedera Developer Portal, para
+                construir su primera dapp (27 feb.\ 2026, 3,5 h, dentro de un programa de inclusión).
+            \item Speaker en \textbf{Blockchain Summit Latam Bogot\'a} (4 nov.\ 2026): taller de
+                1 hora \textit{Tokenización de activos y agentes de IA con control y trazabilidad
+                en Hedera}, con el embajador Juan Manuel G\'omez.
+            \item Fui jurado por encargo de Hedera en ETHOnline 2026 (unos \textbf{200 proyectos})
+                y NEA Tech 2026, Argentina (unos \textbf{20 proyectos}).
+            \item Acompaño a desarrolladores nuevos y apoyo a equipos con contratos inteligentes y
+                SDKs; representé a Hedera en ETHDenver 2026, Hedera DevDay y Consensus Miami 2026.
+        \end{itemize}
+
+    \item \entry{Líder técnico}{X-Culture Professional Association (XPA)}{2025 -- 2026}
+        \begin{itemize}
+            \item Construí el sitio oficial (WordPress, Elementor) con pasarela de pagos y llevé
+                la parte técnica de eventos virtuales internacionales.
+        \end{itemize}
+
+    \item \entry{Instructor y mentor de programación}{Kodland}{2021 -- 2024}
+        \begin{itemize}
+            \item Enseñé \textbf{Python} a más de \textbf{150 estudiantes} (de 10 a 20 años) en más de 30 cursos.
+        \end{itemize}
+\end{itemize}
+
+\needspace{6\baselineskip}
+\section*{Proyectos destacados}
+\begin{itemize}
+    \needspace{4\baselineskip}
+    \item \textbf{Tacaño} (\gh{tacano}), plugin de código abierto para Claude Code: reduce el
+        uso de tokens en cerca de \textbf{39\,\%}, medido reproduciendo \textbf{500 turnos
+        reales}. Un hook consulta a un modelo pequeño cuándo compactar y qué delegar a
+        trabajadores más baratos. En un catálogo de plugins, con documentación en inglés y español.
+    \needspace{4\baselineskip}
+    \item \textbf{Willys por Colombia} (\href{https://willys-por-colombia.vercel.app}{demo},
+        \gh{willys-por-colombia}): juego de manejo en three.js con música en vivo de
+        \textbf{Google Lyria RealTime}. La música se mezcla según la cercanía a cada región y se
+        va desviando al manejar; cada región repite su tema desde una semilla fija. 18 suites de
+        pruebas automáticas y controles táctiles.
+    \needspace{4\baselineskip}
+    \item \textbf{VerifiChain Visual} (\gh{verifichain-vision-oracle}), hackathon Hedera APEX
+        2026: agente de inspección visual para metal y concreto (YOLOv8 con respaldo de Claude).
+        Cada veredicto queda registrado en Hedera y certificado con un NFT. Pensado para
+        empresas industriales de Santander.
+    \needspace{4\baselineskip}
+    \item \textbf{x402 Guard} (\gh{x402-guard}), Hedera x402 Bounty: proxy de pagos para agentes
+        de IA. El agente no tiene llaves; el proxy paga solo si una política de gasto lo permite,
+        y cada decisión, aprobada o bloqueada, queda en un registro de auditoría público (Hedera
+        Consensus Service).
+    \needspace{4\baselineskip}
+    \item \textbf{Hive Protocol} (\gh{HIVE}), ETHDenver 2026, \textbf{segundo lugar} en el bounty
+        de automatización on-chain de Hedera: tres agentes de IA proponen, ejecutan y validan
+        conocimiento sin intervención humana, con un orquestador MCP y temas on-chain.
+    \item \textbf{Más:} proyectos de hackathon ScoutBrief, Quorum Treasury, PULSO Tanda y Roast
+        Pitch (\href{https://github.com/Nicolas6879}{github.com/Nicolas6879}).
+\end{itemize}
+
+\needspace{6\baselineskip}
+\section*{Educación}
+\begin{itemize}
+    \item \entry{Universidad Industrial de Santander (UIS)}{Ingeniería de Sistemas}{2021 -- jul.\ 2026}
+    \item \entry{SENA}{Técnico en Equipos Electrónicos Industriales}{2018 -- 2019}
+\end{itemize}
+
+\needspace{6\baselineskip}
+\section*{Habilidades técnicas}
+\begin{itemize}
+    \item \textbf{Lenguajes:} Python, TypeScript, JavaScript, PHP, Visual Basic, SQL, Solidity
+        (también Rust, Java, C++, Go)
+    \item \textbf{Web:} Vue 3, React, Next.js, three.js, Laravel, Node.js, REST
+    \item \textbf{IA y agentes:} MCP, plugins y hooks de Claude Code, llamada a herramientas,
+        sistemas multiagente, APIs de LLMs (Claude, Gemini, OpenAI), YOLOv8
+    \item \textbf{Blockchain:} Hedera (servicio de consenso, tokens, contratos inteligentes), Foundry, Hardhat
+    \item \textbf{Datos y herramientas:} SQL Server, MySQL, PostgreSQL, Power BI, Docker, Git, Vercel, n8n
+    \item \textbf{Ingeniería inversa:} análisis de tráfico, binarios de Android y Flutter, REA
+\end{itemize}
+
+\section*{Idiomas}
+Español (nativo) \textperiodcentered{} Inglés (intermedio, B1; mejorando hacia B2)
+
+\end{document}
