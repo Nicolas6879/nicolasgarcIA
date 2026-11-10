@@ -223,7 +223,7 @@ ${ensenanza(c.ensenanza)}
 ${trayectoria(c.trayectoria, c.ui)}
 ${contacto(c.contacto, c.nicos, c.ui)}
   </main>
-  <aside class="stage" id="stage" data-active="${c.inicio.pieza}" aria-hidden="true">
+  <aside class="stage" id="stage" data-active="${c.inicio.pieza}" data-modelo="${raiz}models/laptop.glb" aria-hidden="true">
     <div class="stage-in">${ilustracion()}</div>
   </aside>
 </div>

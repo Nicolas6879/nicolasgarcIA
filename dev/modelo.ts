@@ -1,7 +1,5 @@
 // Pagina de verificacion del modelo (solo desarrollo, no entra al build).
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
 const info = document.getElementById('info') as HTMLPreElement
@@ -38,38 +36,29 @@ function resize() {
 addEventListener('resize', resize)
 resize()
 
-interface Pieza {
-  nodo: THREE.Object3D
-  reposo: THREE.Vector3
-  offset: THREE.Vector3
-}
-const piezas: Pieza[] = []
+import { cargarLaptop, type Pieza } from '../src/three/cargador'
+
+let piezas: Pieza[] = []
 let desarmado = false
 let t = 0 // 0 = armado, 1 = desarmado
 
 const inicio = performance.now()
-new GLTFLoader()
-  .setMeshoptDecoder(MeshoptDecoder)
-  .loadAsync('/models/laptop.glb')
-  .then((gltf) => {
+cargarLaptop('/models/laptop.glb')
+  .then(({ raiz, piezas: ps }) => {
     const ms = Math.round(performance.now() - inicio)
-    scene.add(gltf.scene)
+    scene.add(raiz)
+    piezas = ps
     let tris = 0
-    const nombres: string[] = []
-    gltf.scene.traverse((o) => {
+    raiz.traverse((o) => {
       const mesh = o as THREE.Mesh
       if (mesh.isMesh) {
         const g = mesh.geometry
         tris += (g.index ? g.index.count : g.attributes.position.count) / 3
       }
     })
-    for (const nodo of gltf.scene.children) {
-      nombres.push(nodo.name)
-      // userData.explode viene en coordenadas Blender (Z arriba): three = (x, z, -y)
-      const e = (nodo.userData.explode ?? [0, 0, 0]) as number[]
-      piezas.push({ nodo, reposo: nodo.position.clone(), offset: new THREE.Vector3(e[0], e[2], -e[1]) })
-    }
-    info.textContent = `nodos (${nombres.length}): ${nombres.join(', ')}\ntriangulos: ${tris}\ncarga: ${ms} ms`
+    info.textContent = `nodos (${ps.length}): ${ps.map((p) => p.nombre).join(', ')}
+triangulos: ${tris}
+carga: ${ms} ms`
   })
   .catch((err) => {
     info.textContent = 'ERROR: ' + String(err)

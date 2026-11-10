@@ -239,6 +239,12 @@ main section + section { border-top: 1px solid var(--border); }
 /* Escenario (aquí irá el canvas 3D) */
 .stage { position: sticky; top: var(--header-h); height: calc(100svh - var(--header-h)); align-self: start; }
 .stage-in { height: 100%; display: grid; place-items: center; }
+/* Canvas 3D: se funde cuando el modelo está listo y sustituye al SVG */
+canvas.escena { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; opacity: 0; transition: opacity 0.6s ease; pointer-events: none; }
+canvas.escena.is3d { opacity: 1; }
+.stage.is3d .stage-in { display: none; }
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
 .laptop { width: 100%; max-height: 80%; overflow: visible; }
 .laptop .p { fill: none; stroke: color-mix(in srgb, var(--sec) 40%, var(--base)); stroke-width: 2; transition: stroke 0.4s ease, fill 0.4s ease; }
 .laptop .ln { stroke-linecap: round; }

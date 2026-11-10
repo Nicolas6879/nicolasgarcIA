@@ -58,6 +58,32 @@ if (hayIO) {
   document.querySelectorAll('main section[data-pieza]').forEach((s) => so.observe(s))
 }
 
+// Portátil 3D: solo con escenario visible (>= 860px) y WebGL; después del primer pintado.
+// Three, GSAP y Lenis viven en un chunk aparte; mientras tanto (o sin WebGL) queda el SVG.
+function hayWebGL(): boolean {
+  try {
+    const c = document.createElement('canvas')
+    const gl = (c.getContext('webgl2') ?? c.getContext('webgl')) as WebGLRenderingContext | null
+    if (!gl) return false
+    gl.getExtension('WEBGL_lose_context')?.loseContext()
+    return true
+  } catch {
+    return false
+  }
+}
+const anchoMin = window.matchMedia('(min-width: 860px)')
+let tresD = false
+function cargar3D() {
+  if (tresD || !stage || !anchoMin.matches || !hayWebGL()) return
+  tresD = true
+  const lanzar = () => import('./three/escena').then((m) => m.iniciar(stage, { reduce })).catch(() => { tresD = false })
+  if ('requestIdleCallback' in window) requestIdleCallback(() => void lanzar(), { timeout: 2000 })
+  else setTimeout(() => void lanzar(), 200)
+}
+if (document.readyState === 'complete') cargar3D()
+else window.addEventListener('load', cargar3D, { once: true })
+anchoMin.addEventListener('change', () => document.readyState === 'complete' && cargar3D())
+
 // Contador 0 -> meta
 document.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => {
   const meta = Number(el.dataset.count)
