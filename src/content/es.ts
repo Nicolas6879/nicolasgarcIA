@@ -28,6 +28,7 @@ export const es: Contenido = {
     temaAria: 'Cambiar tema claro u oscuro',
     idioma: { texto: 'EN', aria: 'View in English', lang: 'en', ruta: '' },
     capturaDe: 'Captura de',
+    capturaProx: 'Captura próximamente',
     tecnologiasAria: 'Tecnologías',
     verGithub: 'Ver en GitHub',
     pestana: '(se abre en pestaña nueva)',

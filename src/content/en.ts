@@ -26,6 +26,7 @@ export const en: Contenido = {
     temaAria: 'Switch between light and dark theme',
     idioma: { texto: 'ES', aria: 'Ver en español', lang: 'es', ruta: 'es/' },
     capturaDe: 'Screenshot of',
+    capturaProx: 'Screenshot coming soon',
     tecnologiasAria: 'Technologies',
     verGithub: 'View on GitHub',
     pestana: '(opens in a new tab)',

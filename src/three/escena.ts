@@ -7,38 +7,41 @@ import Lenis from 'lenis'
 import { cargarLaptop, type Pieza } from './cargador'
 
 const SIN_RESALTE = new Set(['tapa', 'chasis']) // inicio y contacto muestran el portátil entero
-const MARGEN_PIEZA = 1.4
 const FOV = 35
-const DIR = new THREE.Vector3(-0.55, 0.6, 0.85).normalize() // dirección de la cámara (3/4)
+const MARGEN = 0.86 // fracción del campo visual que puede ocupar el portátil (el resto es margen)
+const RAD = Math.PI / 180
 
+/** Estado animable: separación de cada pieza (fracción de explode.json) + parámetros de cámara. */
 type Estado = Record<string, number>
+
 interface Paso {
   id: string
-  /** Piezas que se separan en esta sección (e = 1). */
-  separa: string[]
-  /** Piezas que se enfocan; vacío = todo el portátil. */
-  foco: string[]
-  /** Vuelve a armar todo. */
-  arma?: boolean
+  /** Separación por pieza (las ausentes = 0). pantalla es relativa a la tapa. */
+  e: Record<string, number>
+  /** Inclinación del teclado (rad). */
+  tilt?: number
+  /** Cámara: azimut y elevación (grados), zoom extra (<= 1.2) y pieza hacia la que se desplaza la mirada. */
+  az: number
+  el: number
+  zoom: number
+  foco?: string
+  /** Cuánto se desplaza el punto de mira hacia la pieza (0..0.3). */
+  fw?: number
 }
 
-// Orden y reglas de desarme (acumulativo; contacto rearma).
+// Una sección = un estado completo (nada es acumulativo; al subir se invierte solo).
+const TODO: Record<string, number> = { tapa: 1, pantalla: 1, teclado: 1, placa: 1, cpu: 1, antena: 1, bateria: 1, disco: 1 }
 const PASOS: Paso[] = [
-  { id: 'inicio', separa: [], foco: [] },
-  { id: 'sistemas', separa: ['tapa', 'pantalla'], foco: ['tapa', 'pantalla'] },
-  { id: 'tecnologias', separa: ['teclado', 'placa'], foco: ['placa'] },
-  { id: 'ia', separa: ['cpu'], foco: ['cpu'] },
-  { id: 'comunidad', separa: ['antena'], foco: ['antena'] },
-  { id: 'proyectos', separa: ['bateria'], foco: ['bateria'] },
-  { id: 'ensenanza', separa: [], foco: ['teclado'] },
-  { id: 'trayectoria', separa: ['disco'], foco: ['disco'] },
-  { id: 'contacto', separa: [], foco: [], arma: true },
+  { id: 'inicio', e: {}, az: -33, el: 28, zoom: 1 },
+  { id: 'sistemas', e: { pantalla: 2 }, az: -18, el: 20, zoom: 1.1, foco: 'pantalla', fw: 0.25 },
+  { id: 'tecnologias', e: { teclado: 0.75, placa: 1 }, az: -28, el: 36, zoom: 1.15, foco: 'placa', fw: 0.3 },
+  { id: 'ia', e: { teclado: 0.75, cpu: 0.5 }, az: -25, el: 42, zoom: 1.2, foco: 'cpu', fw: 0.3 },
+  { id: 'comunidad', e: { antena: 3 }, az: -55, el: 26, zoom: 1.15, foco: 'antena', fw: 0.3 },
+  { id: 'proyectos', e: { teclado: 0.75, bateria: 0.8 }, az: -35, el: 34, zoom: 1.15, foco: 'bateria', fw: 0.3 },
+  { id: 'ensenanza', e: { teclado: 0.7 }, tilt: 0.22, az: -30, el: 32, zoom: 1.1, foco: 'teclado', fw: 0.25 },
+  { id: 'trayectoria', e: TODO, az: -35, el: 28, zoom: 1, foco: 'disco', fw: 0.1 },
+  { id: 'contacto', e: {}, az: -33, el: 28, zoom: 1 },
 ]
-
-interface Encuadre {
-  c: THREE.Vector3
-  r: number
-}
 
 export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Promise<void> {
   const { reduce } = opc
@@ -70,47 +73,49 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   const porNombre = new Map<string, Pieza>(piezas.map((p) => [p.nombre, p]))
 
   // ---- Estado animable ----
-  const e: Estado = {}
-  for (const p of piezas) e[p.nombre] = 0
-  const cam = { x: 0, y: 0, z: 0, r: 1 }
+  const claves = piezas.map((p) => p.nombre)
+  const S: Estado = { tilt: 0, az: PASOS[0].az, el: PASOS[0].el, zoom: 1, fw: 0, fx: 0, fy: 0, fz: 0 }
+  for (const k of claves) S[k] = 0
   let sucio = true
   const pedir = () => {
     sucio = true
   }
-
+  const offT = porNombre.get('tapa')!.offset
+  const tmpV = new THREE.Vector3()
   const aplicar = (est: Estado) => {
-    for (const p of piezas) p.nodo.position.copy(p.reposo).addScaledVector(p.offset, est[p.nombre] ?? 0)
+    for (const p of piezas) {
+      p.nodo.position.copy(p.reposo)
+      const k = est[p.nombre] ?? 0
+      if (p.nombre === 'pantalla') {
+        // La pantalla se separa respecto a la tapa (que va con su propia fracción).
+        p.nodo.position.addScaledVector(offT, est.tapa ?? 0)
+        p.nodo.position.addScaledVector(tmpV.copy(p.offset).sub(offT), k)
+      } else p.nodo.position.addScaledVector(p.offset, k)
+      if (p.nombre === 'teclado') p.nodo.rotation.x = est.tilt ?? 0
+    }
     raiz.updateMatrixWorld(true)
   }
-  const encuadrar = (nombres: string[]): Encuadre => {
-    const box = new THREE.Box3()
-    const lista = nombres.length ? nombres.map((n) => porNombre.get(n)!.nodo) : piezas.map((p) => p.nodo)
-    for (const n of lista) box.expandByObject(n)
-    const s = box.getBoundingSphere(new THREE.Sphere())
-    return { c: s.center.clone(), r: Math.max(s.radius, 0.1) * (nombres.length ? MARGEN_PIEZA : 1) }
-  }
+  const centroDe = (n: string): THREE.Vector3 => new THREE.Box3().expandByObject(porNombre.get(n)!.nodo).getCenter(new THREE.Vector3())
 
-  // Estados acumulados y encuadres por sección (calculados con las posiciones reales).
-  const estados: Estado[] = []
-  const encuadres: Encuadre[] = []
-  {
-    let actual: Estado = { ...e }
-    for (const paso of PASOS) {
-      actual = { ...actual }
-      if (paso.arma) for (const k in actual) actual[k] = 0
-      for (const n of paso.separa) actual[n] = 1
-      aplicar(actual)
-      estados.push(actual)
-      encuadres.push(encuadrar(paso.foco))
+  // Un estado completo por sección (con el punto de mira calculado sobre la pose real).
+  const estados: Estado[] = PASOS.map((paso) => {
+    const est: Estado = { tilt: paso.tilt ?? 0, az: paso.az, el: paso.el, zoom: paso.zoom, fw: paso.foco ? (paso.fw ?? 0) : 0, fx: 0, fy: 0, fz: 0 }
+    for (const k of claves) est[k] = paso.e[k] ?? 0
+    aplicar(est)
+    if (paso.foco) {
+      const c = centroDe(paso.foco)
+      est.fx = c.x
+      est.fy = c.y
+      est.fz = c.z
     }
-    aplicar(e)
+    return est
+  })
+  // El punto de mira de las secciones sin foco no importa (fw = 0): se hereda para que no viaje.
+  for (let i = 1; i < estados.length; i++) {
+    if (!PASOS[i].foco) Object.assign(estados[i], { fx: estados[i - 1].fx, fy: estados[i - 1].fy, fz: estados[i - 1].fz })
   }
-  const setCam = (q: Encuadre) => {
-    cam.x = q.c.x
-    cam.y = q.c.y
-    cam.z = q.c.z
-    cam.r = q.r
-  }
+  Object.assign(S, estados[0])
+  aplicar(S)
 
   // ---- Resaltado de la pieza activa: aristas en color de acento ----
   const colorAcento = new THREE.Color('#FF7A45')
@@ -202,23 +207,42 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   new ResizeObserver(ajustar).observe(stage)
   new ResizeObserver(ajustar).observe(document.documentElement)
 
-  // ---- Cámara: distancia que encuadra la esfera sin cortarla ----
+  // ---- Cámara: siempre encuadra TODO el portátil en su pose actual ----
   const mouse = { x: 0, y: 0, sx: 0, sy: 0 }
-  const tmp = new THREE.Vector3()
+  const caja = new THREE.Box3()
+  const centro = new THREE.Vector3()
+  const mira = new THREE.Vector3()
   const dir = new THREE.Vector3()
-  const euler = new THREE.Euler()
+  const der = new THREE.Vector3()
+  const arr = new THREE.Vector3()
+  const rel = new THREE.Vector3()
+  const ARRIBA = new THREE.Vector3(0, 1, 0)
   const colocarCamara = () => {
-    // Semiángulos útiles: solo la zona del escenario (no todo el viewport) debe contener la esfera.
-    const tv = Math.tan(THREE.MathUtils.degToRad(FOV / 2))
-    const vHalf = Math.atan((tv * zonaH) / alto)
-    const hHalf = Math.atan((tv * zonaW) / alto)
-    const dist = (cam.r * 1.25) / Math.sin(Math.min(vHalf, hHalf))
-    // Giro suave según el ratón (pocos grados).
-    euler.set(mouse.sy * 0.05, -mouse.sx * 0.1, 0)
-    dir.copy(DIR).applyEuler(euler)
-    tmp.set(cam.x, cam.y, cam.z)
-    camera.position.copy(tmp).addScaledVector(dir, dist)
-    camera.lookAt(tmp)
+    caja.makeEmpty()
+    for (const p of piezas) caja.expandByObject(p.nodo)
+    caja.getCenter(centro)
+    // Punto de mira: el centro del conjunto, desplazado hacia la pieza activa.
+    mira.set(S.fx, S.fy, S.fz).sub(centro).multiplyScalar(S.fw).add(centro)
+    // Dirección de la cámara según azimut/elevación (+ giro suave del ratón).
+    const az = S.az * RAD - mouse.sx * 0.1
+    const el = Math.max(5 * RAD, S.el * RAD + mouse.sy * 0.05)
+    dir.set(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el))
+    der.crossVectors(ARRIBA, dir).normalize()
+    arr.crossVectors(dir, der)
+    // Semiángulos útiles: solo la zona del escenario, con margen.
+    const tv = Math.tan((FOV / 2) * RAD)
+    const tH = ((tv * zonaW) / alto) * MARGEN
+    const tV = ((tv * zonaH) / alto) * MARGEN
+    // Distancia mínima para que las 8 esquinas de la caja entren en la zona.
+    let d = 0
+    for (let i = 0; i < 8; i++) {
+      rel.set(i & 1 ? caja.max.x : caja.min.x, i & 2 ? caja.max.y : caja.min.y, i & 4 ? caja.max.z : caja.min.z).sub(mira)
+      const prof = rel.dot(dir)
+      d = Math.max(d, prof + Math.abs(rel.dot(der)) / tH, prof + Math.abs(rel.dot(arr)) / tV)
+    }
+    d = Math.max(d / Math.min(S.zoom, 1.2), 0.2)
+    camera.position.copy(mira).addScaledVector(dir, d)
+    camera.lookAt(mira)
   }
 
   // ---- Bucle bajo demanda (el ticker de gsap se detiene con la pestaña oculta) ----
@@ -235,19 +259,17 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     }
     if (!sucio) return
     sucio = false
-    aplicar(e)
+    aplicar(S)
     colocarCamara()
     renderer.render(scene, camera)
   }
   gsap.ticker.add(dibujar)
 
   if (reduce) {
-    // Pose estática: todo desarmado y encuadrado.
-    for (const p of piezas) e[p.nombre] = 1
-    aplicar(e)
-    setCam(encuadrar([]))
+    // Pose estática: vista con todo desarmado (la de trayectoria).
+    Object.assign(S, estados[PASOS.length - 2], { fw: 0 })
+    aplicar(S)
   } else {
-    setCam(encuadres[0])
     gsap.registerPlugin(ScrollTrigger)
     window.addEventListener('pointermove', (ev) => {
       mouse.x = (ev.clientX / window.innerWidth) * 2 - 1
@@ -272,29 +294,17 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
       })
     })
 
-    // Una transición por sección: de su estado anterior al suyo, atada al scroll.
+    // Una transición por sección, de su estado anterior al suyo, atada al scroll (reversible).
     for (let i = 1; i < PASOS.length; i++) {
       const sec = document.getElementById(PASOS[i].id)
       if (!sec) continue
-      const previo = estados[i - 1]
-      const nuevo = estados[i]
-      const desde: Estado = {}
-      const hasta: Estado = {}
-      for (const k in nuevo) {
-        if (previo[k] !== nuevo[k]) {
-          desde[k] = previo[k]
-          hasta[k] = nuevo[k]
-        }
-      }
-      const st = { trigger: sec, start: 'top 75%', end: 'top 25%' }
-      if (Object.keys(desde).length) gsap.fromTo(e, desde, { ...hasta, ease: 'none', immediateRender: false, onUpdate: pedir, scrollTrigger: { ...st, scrub: 0.6 } })
-      const a = encuadres[i - 1]
-      const b = encuadres[i]
-      gsap.fromTo(
-        cam,
-        { x: a.c.x, y: a.c.y, z: a.c.z, r: a.r },
-        { x: b.c.x, y: b.c.y, z: b.c.z, r: b.r, ease: 'none', immediateRender: false, onUpdate: pedir, scrollTrigger: { ...st, scrub: 0.8 } },
-      )
+      gsap.fromTo(S, { ...estados[i - 1] }, {
+        ...estados[i],
+        ease: 'none',
+        immediateRender: false,
+        onUpdate: pedir,
+        scrollTrigger: { trigger: sec, start: 'top 75%', end: 'top 25%', scrub: 0.8 },
+      })
     }
     ScrollTrigger.refresh()
   }

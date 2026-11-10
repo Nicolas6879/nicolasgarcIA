@@ -434,7 +434,10 @@ def build_tapa():
     L = LID_V1 - LID_V0
     vc = (LID_V0 + LID_V1) / 2
     ws, wf = SHELL_W, FRAME_W
-    b.box((0, vc, (ws[0] + ws[1]) / 2), (W, L, ws[1] - ws[0]), "aluminio", bev=0.0012, seg=2, M=LID_M)
+    # carcasa exterior de aluminio + capa interior grafito (la cara que mira a la pantalla es negra)
+    wm = ws[1] - 0.0007
+    b.box((0, vc, (ws[0] + wm) / 2), (W, L, wm - ws[0]), "aluminio", bev=0.0012, seg=2, M=LID_M)
+    b.box((0, vc, (wm + ws[1]) / 2), (W - 0.0004, L - 0.0004, ws[1] - wm), "grafito", bev=0.0002, M=LID_M)
     wc, wh = (wf[0] + wf[1]) / 2, wf[1] - wf[0]
     v_scr0 = LID_V0 + BEZEL_BOTTOM
     v_scr1 = v_scr0 + SCREEN_H

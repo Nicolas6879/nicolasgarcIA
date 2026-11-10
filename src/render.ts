@@ -80,11 +80,13 @@ function sistemas(c: Contenido['sistemas'], u: Contenido['ui'], o: Opciones): st
   const raiz = o.raiz ?? ''
   const items = c.items
     .map((it) => {
-      const base = it.captura.replace(/\.[a-z0-9]+$/i, '')
       const real = `capturas/${it.captura}`
-      const src = raiz + (o.existe?.(real) ? real : `capturas/placeholder-${base}.svg`)
+      const hay = o.existe?.(real) ?? false
+      const media = hay
+        ? `<img src="${e(raiz + real)}" width="1600" height="1000" loading="lazy" alt="${e(u.capturaDe)} ${e(it.nombre)}" />`
+        : `<div class="ph" role="img" aria-label="${e(u.capturaProx)}: ${e(it.nombre)}"><i></i><i></i><i></i><p class="ph-t">${e(it.nombre)}</p><p class="ph-s">${e(u.capturaProx)}</p></div>`
       const chips = it.stack.map((s) => `<li>${e(s)}</li>`).join('')
-      return `<li class="card rv"><img src="${e(src)}" width="1600" height="1000" loading="lazy" alt="${e(u.capturaDe)} ${e(it.nombre)}" />
+      return `<li class="card rv">${media}
   <div class="card-body"><h3>${e(it.nombre)}</h3><p class="res"><strong>${e(it.resultado)}</strong></p><p>${e(it.detalle)}</p><ul class="chips" aria-label="${e(u.tecnologiasAria)}">${chips}</ul></div></li>`
     })
     .join('')
