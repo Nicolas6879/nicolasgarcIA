@@ -2,6 +2,7 @@
 // Todos los enlaces a archivos de public/ y al otro idioma llevan el prefijo `raiz`,
 // porque con base './' la página en español vive una carpeta más abajo (/es/).
 import type { Contenido, ClaveSeccion } from './content/tipos'
+import { codigo } from './content/codigo'
 
 export interface Opciones {
   /** Indica si un archivo de /public existe (para usar la captura real o el placeholder). */
@@ -86,7 +87,13 @@ function sistemas(c: Contenido['sistemas'], u: Contenido['ui'], o: Opciones): st
         ? `<img src="${e(raiz + real)}" width="1600" height="1000" loading="lazy" alt="${e(u.capturaDe)} ${e(it.nombre)}" />`
         : `<div class="ph" role="img" aria-label="${e(u.capturaProx)}: ${e(it.nombre)}"><i></i><i></i><i></i><p class="ph-t">${e(it.nombre)}</p><p class="ph-s">${e(u.capturaProx)}</p></div>`
       const chips = it.stack.map((s) => `<li>${e(s)}</li>`).join('')
-      return `<li class="card rv">${media}
+      const fuente = codigo[it.codigo] ?? ''
+      const lang = it.codigo.split('.').pop() ?? ''
+      // Sin JS: captura y, debajo, el fragmento. Con JS: un <canvas> encima de .media deshace la captura en
+      // partículas que forman el código; el <pre> sigue en el HTML (oculto a la vista, accesible).
+      return `<li class="card rv" data-fx>
+  <div class="media">${media}<button type="button" class="fx-btn" hidden data-codigo="${e(u.verCodigo)}" data-captura="${e(u.verCaptura)}">${e(u.verCodigo)}</button></div>
+  <div class="codigo" data-archivo="${e(it.codigo)}"><pre tabindex="0"><code class="language-${e(lang)}">${e(fuente)}</code></pre><p class="cod-cap">${e(u.fragmento)}</p></div>
   <div class="card-body"><h3>${e(it.nombre)}</h3><p class="res"><strong>${e(it.resultado)}</strong></p><p>${e(it.detalle)}</p><ul class="chips" aria-label="${e(u.tecnologiasAria)}">${chips}</ul></div></li>`
     })
     .join('')

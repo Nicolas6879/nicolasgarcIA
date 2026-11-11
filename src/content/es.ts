@@ -29,6 +29,9 @@ export const es: Contenido = {
     idioma: { texto: 'EN', aria: 'View in English', lang: 'en', ruta: '' },
     capturaDe: 'Captura de',
     capturaProx: 'Captura próximamente',
+    verCodigo: 'Ver código',
+    verCaptura: 'Ver captura',
+    fragmento: 'Fragmento simplificado',
     tecnologiasAria: 'Tecnologías',
     verGithub: 'Ver en GitHub',
     pestana: '(se abre en pestaña nueva)',
@@ -76,7 +79,7 @@ export const es: Contenido = {
         detalle: 'Seis módulos: documentos, indicadores, auditorías, riesgos, acciones correctivas y gestión del cambio. Fue mi trabajo de grado.',
         stack: ['Vue 3', 'TypeScript', 'Pinia', 'Laravel', 'MySQL'],
         captura: 'calidad.webp',
-        codigo: 'calidad.ts', // fragmento real en el que se "desintegra" la captura
+        codigo: 'calidad.ts', // fragmento ilustrativo (src/content/codigo.ts) en el que se "desintegra" la captura
       },
       {
         nombre: 'Preoperacionales',

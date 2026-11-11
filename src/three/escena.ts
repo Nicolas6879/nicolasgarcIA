@@ -5,6 +5,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { cargarLaptop, type Pieza } from './cargador'
+import { canvasActivo, alRedibujar } from '../efectos/desintegrar'
 
 const SIN_RESALTE = new Set(['tapa', 'chasis']) // inicio y contacto muestran el portátil entero
 const FOV = 35
@@ -179,6 +180,71 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     leerAcento()
     pintar()
   })
+
+  // ---- Pantalla: en "sistemas" muestra el canvas del efecto de la tarjeta activa (la más cercana al centro) ----
+  const matPantalla = piezas.flatMap((p) => p.mats).find((x) => x.m.name === 'pantalla')?.m
+  if (matPantalla) {
+    const orig = {
+      color: matPantalla.color.clone(),
+      emissive: matPantalla.emissive.clone(),
+      intensidad: matPantalla.emissiveIntensity,
+      map: matPantalla.map,
+      emissiveMap: matPantalla.emissiveMap,
+    }
+    const piezaSistemas = document.getElementById('sistemas')?.dataset.pieza // stage.dataset.active guarda la pieza, no la sección
+    // Una textura por canvas; si el canvas cambia de tamaño (resize) la GPU necesita una textura nueva.
+    const texturas = new Map<HTMLCanvasElement, { tex: THREE.CanvasTexture; w: number; h: number }>()
+    let lienzoActual: HTMLCanvasElement | null = null
+    const texDe = (cv: HTMLCanvasElement): THREE.CanvasTexture => {
+      let t = texturas.get(cv)
+      if (t && (t.w !== cv.width || t.h !== cv.height)) {
+        t.tex.dispose()
+        t = undefined
+      }
+      if (!t) {
+        const tex = new THREE.CanvasTexture(cv)
+        tex.colorSpace = THREE.SRGBColorSpace
+        tex.flipY = false // UV de glTF: origen arriba a la izquierda
+        t = { tex, w: cv.width, h: cv.height }
+        texturas.set(cv, t)
+      }
+      return t.tex
+    }
+    const aplicarTextura = (cv: HTMLCanvasElement) => {
+      const tex = texDe(cv)
+      tex.needsUpdate = true
+      if (matPantalla.map !== tex) {
+        matPantalla.map = tex
+        matPantalla.emissiveMap = tex
+        matPantalla.needsUpdate = true
+      }
+    }
+    const ponerPantalla = (cv: HTMLCanvasElement | null) => {
+      if (cv === lienzoActual) return
+      lienzoActual = cv
+      if (!cv) {
+        matPantalla.color.copy(orig.color)
+        matPantalla.emissive.copy(orig.emissive)
+        matPantalla.emissiveIntensity = orig.intensidad
+        matPantalla.map = orig.map
+        matPantalla.emissiveMap = orig.emissiveMap
+        matPantalla.needsUpdate = true
+      } else {
+        matPantalla.color.set(0xffffff)
+        matPantalla.emissive.set(0xffffff)
+        matPantalla.emissiveIntensity = 0.6
+        aplicarTextura(cv)
+      }
+      pedir()
+    }
+    // La textura solo se sube a la GPU cuando ese canvas se redibuja.
+    alRedibujar((cv) => {
+      if (cv !== lienzoActual) return
+      aplicarTextura(cv)
+      pedir()
+    })
+    gsap.ticker.add(() => ponerPantalla(stage.dataset.active === piezaSistemas ? canvasActivo() : null))
+  }
 
   // ---- Tamaño: el canvas cubre el viewport; el portátil se centra en la zona del escenario ----
   let ancho = 0

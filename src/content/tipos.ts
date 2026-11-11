@@ -29,6 +29,9 @@ export interface Contenido {
     idioma: { texto: string; aria: string; lang: Idioma; ruta: string }
     capturaDe: string
     capturaProx: string
+    verCodigo: string
+    verCaptura: string
+    fragmento: string
     tecnologiasAria: string
     verGithub: string
     pestana: string

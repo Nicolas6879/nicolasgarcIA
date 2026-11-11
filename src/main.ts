@@ -84,6 +84,24 @@ if (document.readyState === 'complete') cargar3D()
 else window.addEventListener('load', cargar3D, { once: true })
 anchoMin.addEventListener('change', () => document.readyState === 'complete' && cargar3D())
 
+// Efecto captura -> código: el módulo (canvas 2D, sin dependencias) se descarga cuando la primera tarjeta se acerca
+const tarjetas = Array.from(document.querySelectorAll<HTMLElement>('.card[data-fx]'))
+if (tarjetas.length) {
+  const fallo = () => tarjetas.forEach((t) => t.classList.add('fx-off')) // sin efecto se muestra el <pre> debajo
+  if (!hayIO || !('roundRect' in CanvasRenderingContext2D.prototype)) fallo()
+  else {
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((en) => en.isIntersecting)) return
+        io.disconnect()
+        import('./efectos/desintegrar').then((m) => m.iniciar(tarjetas, { reduce })).catch(fallo)
+      },
+      { rootMargin: '600px 0px' },
+    )
+    tarjetas.forEach((t) => io.observe(t))
+  }
+}
+
 // Contador 0 -> meta
 document.querySelectorAll<HTMLElement>('[data-count]').forEach((el) => {
   const meta = Number(el.dataset.count)
