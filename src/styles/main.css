@@ -403,3 +403,6 @@ html.lenis, html.lenis body { height: auto; }
   .card .media img, .card .ph { aspect-ratio: 4 / 5; }
   .fx-btn { min-height: 36px; padding-inline: 12px; }
 }
+
+/* Logo: nicolasgarcIA, el "IA" lleva el degradado de acento */
+.brand-ia{background:var(--btn-grad,var(--acc));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800}

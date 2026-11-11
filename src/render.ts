@@ -50,7 +50,7 @@ function cabecera(c: Contenido, raiz: string): string {
   const cv = `${raiz}${u.cvPropio}`
   return `<a class="skip" href="#contenido">${e(u.saltar)}</a>
 <header class="top">
-  <a class="brand" href="#inicio">${e(c.inicio.nombre)}</a>
+  <a class="brand" href="#inicio" aria-label="${e(c.inicio.nombre)}"><span aria-hidden="true">nicolasgarc<span class="brand-ia">IA</span></span></a>
   <nav aria-label="${e(u.navAria)}">${enlaces}</nav>
   <div class="top-actions">
     <a class="btn btn-sm cv-top" href="${cv}" download>${ICONO_DESCARGA}<span>${e(u.descargarCv)}</span></a>

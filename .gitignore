@@ -2,3 +2,7 @@ node_modules
 dist
 *.blend1
 public/models/laptop-raw.glb
+
+# Páginas internas de investigación (no van al repo público)
+opciones-portafolio.html
+muestrario-color.html
