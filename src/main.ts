@@ -20,6 +20,72 @@ document.getElementById('tema')?.addEventListener('click', () => {
   }
 })
 
+// nicOS: terminal (Ctrl/Cmd + K), escritorio y mini-terminal de contacto. Todo en un chunk perezoso.
+type Nicos = typeof import('./nicos/escritorio')
+let nicos: Promise<Nicos> | null = null
+const cargarNicos = () => (nicos ??= import('./nicos/escritorio').catch((err) => ((nicos = null), Promise.reject(err))))
+// Mientras carga el chunk, lo que se escriba se guarda y luego se pasa al input de la terminal.
+let tecleado: string | null = null
+let enviar = false
+const guardarTecla = (ev: KeyboardEvent) => {
+  if (tecleado === null || ev.ctrlKey || ev.metaKey || ev.altKey) return
+  if (ev.key.length === 1) tecleado += ev.key
+  else if (ev.key === 'Backspace') tecleado = tecleado.slice(0, -1)
+  else if (ev.key === 'Enter') enviar = true
+  else return
+  ev.preventDefault()
+}
+window.addEventListener('keydown', guardarTecla, true)
+const abrirNicos = (v: 'terminal' | 'leeme') => {
+  if (v === 'terminal') tecleado ??= ''
+  void cargarNicos()
+    .then((m) => {
+      m.abrir(v)
+      const input = document.querySelector<HTMLInputElement>('.nicos .nx-w-terminal input')
+      if (input && tecleado) {
+        input.value += tecleado
+        input.dispatchEvent(new Event('input', { bubbles: true }))
+        if (enviar) input.form?.requestSubmit()
+      }
+    })
+    .catch(() => {})
+    .finally(() => {
+      tecleado = null
+      enviar = false
+    })
+}
+const btnNicos = document.getElementById('nicos-abrir')
+const mac = /Mac|iPhone|iPad/.test(navigator.platform)
+const chip = btnNicos?.querySelector('kbd')
+if (chip && mac) chip.textContent = '⌘K'
+btnNicos?.addEventListener('click', () => abrirNicos('terminal'))
+btnNicos?.addEventListener('pointerenter', () => void cargarNicos().catch(() => {}), { once: true })
+const encender = document.getElementById('nicos-encender')
+encender?.addEventListener('click', () => abrirNicos('leeme'))
+encender?.addEventListener('pointerenter', () => void cargarNicos().catch(() => {}), { once: true })
+window.addEventListener('keydown', (ev) => {
+  if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && ev.key.toLowerCase() === 'k') {
+    ev.preventDefault()
+    abrirNicos('terminal')
+  }
+})
+const mini = document.getElementById('mini-term')
+if (mini) {
+  const montar = () => void cargarNicos().then((m) => m.montarMini(mini)).catch(() => {})
+  if (!hayIO) montar()
+  else {
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((en) => en.isIntersecting)) return
+        io.disconnect()
+        montar()
+      },
+      { rootMargin: '900px 0px' },
+    )
+    io.observe(mini)
+  }
+}
+
 // Entrada suave
 const rv = document.querySelectorAll<HTMLElement>('.rv')
 if (reduce || !hayIO) {

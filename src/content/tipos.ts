@@ -112,18 +112,51 @@ export interface Contenido {
     linkedin: string
     github: string
   }
+  /** nicOS: terminal (Ctrl/Cmd + K), escritorio retro y mini-terminal de contacto. */
   nicos: {
     bienvenida: string
-    ventanas: string[]
+    /** Texto del botón de contacto que enciende el escritorio. */
+    encender: string
+    /** Etiqueta (accesible) del botón de la cabecera. */
+    botonCabecera: string
+    /** Pista del placeholder de la terminal ("type help"). */
+    escribe: string
+    entradaAria: string
+    cerrar: string
+    escritorioAria: string
+    /** Nombre de cada ventana (iconos y barras de título). */
+    ventanas: { leeme: string; proyectos: string; terminal: string; correo: string; cv: string }
+    arranque: { lineas: string[]; saltar: string }
+    /** Etiqueta del CV en el idioma de la página. */
+    cvPropio: string
+    verEnPagina: string
     comandos: {
+      /** Cabecera de la ayuda; las descripciones van en `descripciones`. */
       ayuda: string
+      ayudaPie: string
+      descripciones: Record<
+        'ayuda' | 'whoami' | 'proyectos' | 'cv' | 'tacano' | 'hedera' | 'contacto' | 'ls' | 'abrir' | 'tema' | 'idioma' | 'limpiar' | 'salir',
+        string
+      >
       whoami: string
-      proyectos: string
+      proyectosSistemas: string
+      proyectosPropios: string
       cv: string
       tacano: string
       hedera: string
       contacto: string
       desconocido: string
+      abrirUso: string
+      /** {n} = nombre de la ventana. */
+      abriendo: string
+      abrirNoExiste: string
+      tema: string
+      idioma: string
+      salir: string
+      salirFuera: string
+      sudo: string
+      sudoOtro: string
+      cafe: string[]
     }
   }
 }

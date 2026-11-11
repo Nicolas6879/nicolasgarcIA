@@ -6,6 +6,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import { cargarLaptop, type Pieza } from './cargador'
 import { canvasActivo, alRedibujar } from '../efectos/desintegrar'
+import { crearPantallaNicos } from './pantallaNicos'
+import { leerDatos } from '../nicos/datos'
 
 const SIN_RESALTE = new Set(['tapa', 'chasis']) // inicio y contacto muestran el portátil entero
 const FOV = 35
@@ -243,7 +245,29 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
       aplicarTextura(cv)
       pedir()
     })
-    gsap.ticker.add(() => ponerPantalla(stage.dataset.active === piezaSistemas ? canvasActivo() : null))
+    // Contacto: arranque de nicOS dibujado en un canvas 2D (se redibuja solo mientras la sección está activa).
+    const datos = leerDatos()
+    const pn = datos ? crearPantallaNicos(datos, reduce) : null
+    const piezaContacto = document.getElementById('contacto')?.dataset.pieza
+    let enContacto = false
+    gsap.ticker.add((t) => {
+      const act = stage.dataset.active
+      if (pn && act === piezaContacto) {
+        if (!enContacto) {
+          enContacto = true
+          pn.reiniciar()
+        }
+        const nuevo = pn.dibujar(t)
+        ponerPantalla(pn.canvas)
+        if (nuevo) {
+          aplicarTextura(pn.canvas)
+          pedir()
+        }
+      } else {
+        enContacto = false
+        ponerPantalla(act === piezaSistemas ? canvasActivo() : null)
+      }
+    })
   }
 
   // ---- Tamaño: el canvas cubre el viewport; el portátil se centra en la zona del escenario ----
@@ -346,6 +370,10 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     const lenis = new Lenis({ autoRaf: false })
     lenis.on('scroll', ScrollTrigger.update)
     gsap.ticker.add((t) => lenis.raf(t * 1000))
+    // nicOS (overlay) bloquea el scroll de la página mientras está abierto.
+    window.addEventListener('nicos:open', () => lenis.stop())
+    window.addEventListener('nicos:close', () => lenis.start())
+    if (document.documentElement.classList.contains('nicos-abierto')) lenis.stop()
     gsap.ticker.lagSmoothing(0)
     const cabecera = document.querySelector<HTMLElement>('header.top')
     document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => {

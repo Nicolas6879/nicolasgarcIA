@@ -1,0 +1,177 @@
+/* nicOS: terminal, mini-terminal de contacto y escritorio. Se carga junto al chunk perezoso.
+   Usa los tokens de main.css (--base, --sec, --acc...), así que sigue el tema claro/oscuro en vivo. */
+
+/* El acento sobre fondo claro no llega a 4.5:1 como texto pequeño: versión más oscura solo para texto. */
+:root { --acc-txt: var(--acc); }
+@media (prefers-color-scheme: light) { :root:not([data-theme='dark']) { --acc-txt: #b53f10; } }
+:root[data-theme='light'] { --acc-txt: #b53f10; }
+
+/* ---------- Terminal ---------- */
+.nt {
+  background: var(--surface); color: var(--sec);
+  font: 400 0.8125rem / 1.55 var(--f-mono);
+  padding: 12px 14px; height: 100%; overflow-y: auto; overscroll-behavior: contain; cursor: text;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+.nt .nt-l { margin: 0; max-width: none; font: inherit; white-space: pre-wrap; overflow-wrap: anywhere; text-transform: none; letter-spacing: 0; color: inherit; }
+.nt .nt-dim { color: var(--muted); }
+.nt .nt-err { color: var(--acc-txt); }
+.nt .nt-ind { padding-left: 2ch; }
+.nt .nt-cmd, .nt .nt-prompt { color: var(--acc-txt); white-space: pre; }
+.nt a { color: var(--acc-txt); text-underline-offset: 3px; font-weight: 600; }
+.nt-form { display: flex; align-items: baseline; gap: 1ch; margin: 0; }
+.nt-input {
+  flex: 1; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent;
+  font: inherit; color: inherit; caret-color: var(--acc-txt); border-radius: 0;
+}
+.nt-input::placeholder { color: var(--muted); opacity: 0.85; }
+@media (max-width: 859px) { .nt-input { font-size: 16px; } }
+
+/* Mini-terminal de la sección de contacto: 6 líneas visibles. */
+.pantalla.mini-activa { display: block; padding: 14px 16px; }
+.nt-mini { background: transparent; padding: 0; height: calc(6 * 1.55 * 0.8125rem); }
+.pantalla.mini-activa:focus-within { border-color: var(--acc); }
+
+/* ---------- Overlay ---------- */
+html.nicos-abierto, html.nicos-abierto body { overflow: hidden; }
+.nicos {
+  position: fixed; inset: 0; z-index: 300; background: var(--base); color: var(--sec);
+  font-family: var(--f-text); outline: none;
+}
+.nicos[hidden], .nicos [hidden] { display: none !important; }
+.nx-desk {
+  position: absolute; inset: 0; overflow: hidden;
+  background:
+    radial-gradient(900px 520px at 88% 112%, color-mix(in srgb, var(--acc) 17%, transparent), transparent 70%),
+    radial-gradient(color-mix(in srgb, var(--sec) 14%, transparent) 1.2px, transparent 1.4px) 0 0 / 24px 24px,
+    var(--base);
+}
+
+.nx-bar {
+  position: absolute; inset: 0 0 auto 0; z-index: 5; height: 38px; display: flex; align-items: center; gap: 14px;
+  padding: 0 10px 0 16px; background: var(--surface-2); border-bottom: 2px solid var(--sec);
+  font: 500 0.8125rem var(--f-mono);
+}
+.nx-logo { font: 800 1.1rem / 1 var(--f-title); letter-spacing: -0.01em; }
+.nx-logo i { font: 500 0.6875rem var(--f-mono); color: var(--muted); margin-left: 8px; letter-spacing: 0.04em; }
+.nx-fill { flex: 1; }
+.nx-clock { color: var(--muted); }
+.nx-close {
+  display: inline-flex; align-items: center; gap: 8px; height: 26px; padding: 0 9px; border-radius: 6px; cursor: pointer;
+  background: var(--base); color: var(--sec); border: 2px solid var(--sec); font: 600 0.6875rem var(--f-mono);
+}
+.nx-close:hover { background: var(--sec); color: var(--base); }
+
+/* Iconos del escritorio */
+.nx-icons { position: absolute; left: 14px; top: 58px; display: grid; gap: 10px; width: 92px; }
+.nx-ico {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; padding: 10px 4px 8px;
+  background: transparent; border: 2px solid transparent; border-radius: 10px; color: var(--sec); cursor: pointer;
+  font: 600 0.75rem / 1.2 var(--f-mono); text-align: center;
+}
+.nx-ico:hover { background: color-mix(in srgb, var(--sec) 8%, transparent); border-color: var(--border); }
+.nx-ico svg, .nx-file svg { overflow: visible; }
+.nx-ico svg *, .nx-file svg * { fill: var(--surface-2); stroke: var(--sec); stroke-width: 1; stroke-linejoin: miter; }
+.nx-ico svg .a, .nx-file svg .a { fill: none; stroke: var(--acc); stroke-width: 1; stroke-linecap: square; }
+.nx-ico:hover svg .a { stroke: var(--acc); }
+
+/* Ventanas */
+.nx-wins { position: absolute; inset: 0; pointer-events: none; }
+.nx-win {
+  position: absolute; pointer-events: auto; display: flex; flex-direction: column; width: var(--w, 460px);
+  max-height: calc(100% - 64px); background: var(--base); border: 2px solid var(--sec); border-radius: 10px; overflow: hidden;
+  box-shadow: 7px 7px 0 color-mix(in srgb, var(--sec) 22%, transparent);
+}
+.nx-win.nx-act { box-shadow: 9px 9px 0 color-mix(in srgb, var(--acc) 38%, transparent); }
+.nx-win.nx-drag { box-shadow: 12px 12px 0 color-mix(in srgb, var(--sec) 20%, transparent); }
+.nx-w-leeme { --w: min(480px, calc(100vw - 24px)); }
+.nx-w-proyectos { --w: min(560px, calc(100vw - 24px)); }
+.nx-w-terminal { --w: min(660px, calc(100vw - 24px)); height: min(440px, calc(100% - 80px)); }
+.nx-w-correo { --w: min(430px, calc(100vw - 24px)); }
+.nx-w-cv { --w: min(380px, calc(100vw - 24px)); }
+.nx-tb {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 5px 6px 5px 12px;
+  background: var(--surface-2); border-bottom: 2px solid var(--sec); color: var(--sec);
+  font: 600 0.8125rem var(--f-mono); cursor: grab; touch-action: none; user-select: none;
+}
+.nx-drag .nx-tb { cursor: grabbing; }
+.nx-act .nx-tb { background: var(--acc-grad); color: var(--on-acc); }
+.nx-wx {
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 6px; cursor: pointer;
+  background: var(--base); color: var(--sec); border: 2px solid var(--sec);
+}
+.nx-wx:hover { background: var(--sec); color: var(--base); }
+.nx-act .nx-wx:focus-visible { outline-color: var(--sec); }
+.nx-body { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+.nx-w-terminal .nx-body { background: var(--surface); }
+
+/* Documentos dentro de las ventanas */
+.nx-doc { padding: 18px 20px 22px; font-size: 0.9375rem; line-height: 1.5; }
+.nx-doc p { max-width: none; margin: 0 0 0.8em; }
+.nx-doc h2 { font-size: 1.7rem; margin: 0 0 0.3em; }
+.nx-doc h3 { font-size: 1.05rem; margin: 1.2em 0 0.5em; }
+.nx-doc h3:first-child { margin-top: 0; }
+.nx-eyebrow { font: 500 0.75rem var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.nx-lead { font-size: 1.05rem; line-height: 1.4; }
+.nx-dim { color: var(--muted); font-size: 0.875rem; }
+.nx-cifras { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 6px 0 14px; }
+.nx-cifras li { display: flex; flex-direction: column; gap: 2px; }
+.nx-cifras b { font: 800 1.5rem / 1 var(--f-title); }
+.nx-cifras span { font-size: 0.75rem; line-height: 1.25; color: var(--muted); }
+.nx-lista li { padding: 10px 12px; margin-bottom: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); }
+.nx-lista b { display: block; font-weight: 650; }
+.nx-lista span { color: var(--muted); font-size: 0.875rem; }
+.nx-links { display: flex; gap: 14px; margin: 6px 0 0 !important; font-size: 0.875rem; }
+.nx-doc a:not(.nx-btn):not(.nx-file) { font-weight: 600; text-underline-offset: 3px; }
+.nx-doc a:not(.nx-btn):hover { color: var(--acc-txt); }
+.nx-mail { font: 700 1.2rem / 1.25 var(--f-title); overflow-wrap: anywhere; user-select: all; }
+.nx-fila { display: flex; flex-wrap: wrap; gap: 10px; }
+.nx-btn {
+  display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 999px; cursor: pointer;
+  border: 2px solid var(--border); background: transparent; color: var(--sec); text-decoration: none;
+  font: 650 0.8125rem var(--f-text);
+}
+.nx-btn:hover { border-color: var(--sec); }
+.nx-btn-p { background: var(--acc-grad); color: var(--on-acc); border-color: transparent; }
+.nx-btn-p:hover { filter: brightness(1.06); border-color: transparent; }
+.nx-archivos { display: grid; gap: 12px; }
+.nx-file {
+  display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 2px solid var(--border); border-radius: 10px;
+  text-decoration: none; font-weight: 600; background: var(--surface);
+}
+.nx-file:hover { border-color: var(--acc); }
+
+/* Arranque */
+.nx-boot { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; background: var(--base); text-align: center; cursor: pointer; }
+.nx-boot-in { display: grid; justify-items: center; }
+.nx-boot-logo { margin: 0; font: 800 clamp(3.2rem, 11vw, 6rem) / 1 var(--f-title); letter-spacing: -0.02em; }
+.nx-boot-v { margin: 6px 0 0; font: 500 0.75rem var(--f-mono); color: var(--muted); letter-spacing: 0.08em; }
+.nx-prog { width: min(320px, 70vw); height: 14px; margin: 22px 0 18px; padding: 2px; border: 2px solid var(--sec); border-radius: 5px; }
+.nx-prog i { display: block; height: 100%; width: 0; background: var(--acc-grad); border-radius: 1px; transition: width 1.1s linear; }
+.nx-boot-log { margin: 0; text-align: left; font: 400 0.8125rem / 1.6 var(--f-mono); color: var(--muted); min-height: 6.5em; }
+.nx-boot-log li { opacity: 0; transition: opacity 0.1s; }
+.nx-boot-log li.on { opacity: 1; }
+.nx-boot-skip { margin: 18px 0 0; font: 400 0.75rem var(--f-mono); color: var(--muted); opacity: 0.8; }
+.nx-boot-fin { opacity: 0; transition: opacity 0.15s; }
+
+/* Entrada y salida */
+@keyframes nx-pop { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes nx-unpop { to { opacity: 0; transform: scale(0.96); } }
+@keyframes nx-fadein { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nx-fadeout { to { opacity: 0; } }
+.nx-win.nx-entra { animation: nx-pop 0.16s ease-out; }
+.nx-win.nx-sale { animation: nx-unpop 0.14s ease-in forwards; }
+.nicos.nx-entra { animation: nx-fadein 0.2s ease-out; }
+.nicos.nx-sale { animation: nx-fadeout 0.15s ease-in forwards; }
+
+/* Móvil: iconos en rejilla y una ventana a pantalla completa cada vez */
+@media (max-width: 859px) {
+  .nx-icons { left: 0; right: 0; top: 38px; width: auto; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 22px 14px; gap: 14px 10px; }
+  .nx-win, .nx-win.nx-w-terminal {
+    left: 0 !important; top: 38px !important; right: 0; bottom: 0; width: auto; height: auto; max-height: none;
+    border-radius: 0; border-width: 2px 0 0; box-shadow: none !important;
+  }
+  .nx-tb { cursor: default; }
+  .nx-close span { display: none; }
+  .nx-cifras b { font-size: 1.3rem; }
+}

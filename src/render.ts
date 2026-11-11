@@ -3,6 +3,7 @@
 // porque con base './' la página en español vive una carpeta más abajo (/es/).
 import type { Contenido, ClaveSeccion } from './content/tipos'
 import { codigo } from './content/codigo'
+import { datosNicos, jsonSeguro } from './nicos/datos'
 
 export interface Opciones {
   /** Indica si un archivo de /public existe (para usar la captura real o el placeholder). */
@@ -18,6 +19,8 @@ const NAV_HEADER: readonly ClaveSeccion[] = ['sistemas', 'ia', 'comunidad', 'pro
 
 const ICONO_TEMA =
   '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/></svg>'
+const ICONO_NICOS =
+  '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><rect x="2.5" y="4" width="19" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 10l3 2.5L7 15M12.5 15H17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 const ICONO_DESCARGA =
   '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 20h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 
@@ -52,6 +55,7 @@ function cabecera(c: Contenido, raiz: string): string {
   <div class="top-actions">
     <a class="btn btn-sm cv-top" href="${cv}" download>${ICONO_DESCARGA}<span>${e(u.descargarCv)}</span></a>
     <a class="lang-switch" id="idioma" href="${raiz}${u.idioma.ruta}" hreflang="${u.idioma.lang}" lang="${u.idioma.lang}" aria-label="${e(u.idioma.aria)}">${e(u.idioma.texto)}</a>
+    <button type="button" class="nicos-btn" id="nicos-abrir" aria-label="${e(c.nicos.botonCabecera)}" aria-haspopup="dialog">${ICONO_NICOS}<span class="nb-t">${e(c.nicos.botonCabecera)}</span><kbd aria-hidden="true">Ctrl K</kbd></button>
     <button type="button" class="icon-btn" id="tema" aria-label="${e(u.temaAria)}">${ICONO_TEMA}</button>
   </div>
 </header>
@@ -196,7 +200,11 @@ function contacto(c: Contenido['contacto'], n: Contenido['nicos'], u: Contenido[
     <span class="sr" role="status" id="copiado"></span>
   </div>
   <p class="botones rv"><a class="btn" href="${e(c.linkedin)}" target="_blank" rel="noopener">LinkedIn<span class="sr"> ${e(u.pestana)}</span></a><a class="btn btn-ghost" href="${e(c.github)}" target="_blank" rel="noopener">GitHub<span class="sr"> ${e(u.pestana)}</span></a></p>
-  <div class="pantalla rv"><p class="mono">&gt; ${e(n.bienvenida)}<i class="cursor" aria-hidden="true"></i></p></div>
+  <div class="pantalla rv" id="mini-term"><div class="mini-fb">
+    <p class="mono">&gt; ${e(n.bienvenida)}<i class="cursor" aria-hidden="true"></i></p>
+    <ul class="mini-links"><li>&gt; mail: <a href="mailto:${e(c.email)}">${e(c.email)}</a></li><li>&gt; linkedin: <a href="${e(c.linkedin)}" target="_blank" rel="noopener">${e(c.linkedin.replace('https://www.', ''))}</a></li><li>&gt; github: <a href="${e(c.github)}" target="_blank" rel="noopener">${e(c.github.replace('https://', ''))}</a></li></ul>
+  </div></div>
+  <p class="botones rv nicos-js"><button type="button" class="btn nicos-boot" id="nicos-encender" aria-haspopup="dialog">${e(n.encender)}</button></p>
 </section>`
 }
 
@@ -236,5 +244,6 @@ ${contacto(c.contacto, c.nicos, c.ui)}
     <div class="stage-in">${ilustracion()}</div>
   </aside>
 </div>
-<footer class="foot"><p>${e(c.ui.pie)} ${e(c.inicio.nombre)}</p></footer>`
+<footer class="foot"><p>${e(c.ui.pie)} ${e(c.inicio.nombre)}</p></footer>
+<script type="application/json" id="nicos-datos">${jsonSeguro(datosNicos(c, raiz))}</script>`
 }
