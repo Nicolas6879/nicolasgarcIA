@@ -6,3 +6,6 @@ public/models/laptop-raw.glb
 # Páginas internas de investigación (no van al repo público)
 opciones-portafolio.html
 muestrario-color.html
+
+.vercel
+.env*
