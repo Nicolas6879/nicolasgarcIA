@@ -71,6 +71,8 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   const drag = { az: 0 } // giro táctil del hero (grados)
 
   const canvas = document.createElement('canvas')
+  const pieEl = document.querySelector<HTMLElement>('.foot')
+  let subeAnt = 0
   canvas.setAttribute('aria-hidden', 'true')
   canvas.className = 'escena'
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' })
@@ -703,6 +705,9 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     sombras.actualizar(cajas, desp, caja.min.y, bob, tema.sombra)
     camera.updateMatrixWorld()
     if (actualizarEtiquetas(bob, reduce)) sucio = true
+    // Escritorio: al asomar el pie de página, el portátil sube con él en vez de quedar cortado.
+    const sube = movil || !pieEl ? 0 : Math.max(0, innerHeight - pieEl.getBoundingClientRect().top)
+    if (sube !== subeAnt) canvas.style.transform = (subeAnt = sube) ? `translateY(${-sube}px)` : ''
     renderer.render(scene, camera)
     if (movil) {
       // Si los fotogramas seguidos tardan demasiado (GPU modesta), baja la resolución un escalón (1,5 -> 1,25 -> 1).
