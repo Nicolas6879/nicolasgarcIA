@@ -602,9 +602,12 @@ function objetivoP(c: Carta, ahora: number): number {
     return v
   }
   if (c.pin !== null) return c.pin
+  // La captura se queda entera mientras la tarjeta entra y se lee; se desintegra cuando la
+  // persona sigue bajando (borde superior de 20 % a -15 % de la ventana), así el código
+  // termina de formarse con la tarjeta todavía casi completa en pantalla.
   const vh = window.innerHeight
   const top = c.media.getBoundingClientRect().top
-  return lim((0.7 * vh - top) / (0.35 * vh))
+  return lim((0.2 * vh - top) / (0.35 * vh))
 }
 
 function actualizarEtiqueta(c: Carta) {
