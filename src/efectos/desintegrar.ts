@@ -144,10 +144,12 @@ function dibujarMock(ctx: CanvasRenderingContext2D, W: number, H: number, col: C
   ctx.fillStyle = col.base
   ctx.fillRect(0, 0, W, barra)
   ctx.fillStyle = col.muted
+  // Tres puntos distintos: radio y separación en proporción a la barra (no al ancho), así no se solapan en pantallas estrechas.
+  const rp = lim(barra * 0.15, 2, 5)
   for (let i = 0; i < 3; i++) {
     ctx.globalAlpha = 0.55
     ctx.beginPath()
-    ctx.arc(W * 0.03 + i * W * 0.03, barra / 2, H * 0.014, 0, 7)
+    ctx.arc(rp * 3.2 + i * rp * 3.4, barra / 2, rp, 0, 7)
     ctx.fill()
   }
   ctx.globalAlpha = 1
@@ -283,7 +285,7 @@ function dibujarCodigo(ctx: CanvasRenderingContext2D, c: Carta, col: Colores) {
   ctx.globalAlpha = 0.6
   for (let i = 0; i < 3; i++) {
     ctx.beginPath()
-    ctx.arc(barra * 0.6 + i * barra * 0.5, barra / 2, barra * 0.13, 0, 7)
+    ctx.arc(barra * 0.6 + i * barra * 0.5, barra / 2, Math.min(barra * 0.13, 3.5), 0, 7)
     ctx.fill()
   }
   ctx.globalAlpha = 1

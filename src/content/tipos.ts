@@ -47,6 +47,15 @@ export interface Contenido {
     avisoCopiado: string
     avisoFallo: string
     pie: string
+    /** Nombre localizado de cada pieza del portátil (eyebrow de sección: "02 — Pantalla"). */
+    piezas: Record<Pieza, string>
+    /** Pie de página. */
+    pieLinea: string
+    pieCodigo: string
+    pieAtajo: string
+    cvEtiqueta: string
+    /** Aria del botón flotante de CV (móvil). */
+    cvFabAria: string
     /** Sufijo del contador (' %' en español, '%' en inglés). */
     pct: string
   }
@@ -88,14 +97,15 @@ export interface Contenido {
   comunidad: {
     pieza: Pieza
     titulo: string
-    rol: string
+    /** Rol y fechas por separado: el rol va en negrita y las fechas en una etiqueta mono. */
+    rol: { texto: string; fechas: string }
     logros: { valor: string; texto: string }[]
     charlas: string[]
   }
   proyectos: {
     pieza: Pieza
     titulo: string
-    items: { nombre: string; texto: string; demo?: string; repo?: string }[]
+    items: { nombre: string; meta: string; texto: string; demo?: string; repo?: string }[]
   }
   ensenanza: { pieza: Pieza; titulo: string; texto: string }
   trayectoria: {

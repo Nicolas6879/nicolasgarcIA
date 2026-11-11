@@ -20,7 +20,7 @@ function paginaEstatica(): Plugin[] {
           const existe = (ruta: string) => existsSync(resolve(import.meta.dirname, 'public', ruta))
           const espanol = esPaginaEs(ctx.filename)
           return html
-            .replace('<!--head-->', renderHead(espanol ? es : en))
+            .replace('<!--head-->', renderHead(espanol ? es : en, (process.env.SITE_URL ?? '').replace(/\/+$/, '')))
             .replace('<!--app-->', renderPage(espanol ? es : en, { existe, raiz: espanol ? '../' : '' }))
         },
       },

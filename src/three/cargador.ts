@@ -33,6 +33,18 @@ export async function cargarLaptop(url: string): Promise<{ raiz: THREE.Group; pi
         if (orig.name === 'aluminio') {
           const g = (m.color.r + m.color.g + m.color.b) / 3
           m.color.setRGB(g, g, g)
+          // Cepillado: más metal y reflejos más nítidos en la tapa que en la cubierta/chasis.
+          m.metalness = 0.92
+          m.roughness = nodo.name === 'tapa' ? 0.3 : 0.4
+        } else if (orig.name === 'grafito') {
+          if (nodo.name === 'teclado') {
+            // Las teclas cogen un poco de luz: algo más claras y satinadas (el grafito del bisel sigue oscuro).
+            m.color.set('#2e374b')
+            m.roughness = 0.36
+            m.metalness = 0.12
+          } else {
+            m.roughness = 0.38
+          }
         }
         clones.set(orig, m)
         mats.push({ m, emisivo: m.emissive.clone() })

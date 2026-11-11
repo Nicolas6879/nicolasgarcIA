@@ -1,6 +1,8 @@
 // Portátil 3D que se desarma con el scroll. Se carga con import() dinámico desde main.ts.
 import * as THREE from 'three'
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+import { LineSegments2 } from 'three/addons/lines/LineSegments2.js'
+import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js'
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
@@ -8,11 +10,20 @@ import { cargarLaptop, type Pieza } from './cargador'
 import { canvasActivo, alRedibujar } from '../efectos/desintegrar'
 import { crearPantallaNicos } from './pantallaNicos'
 import { leerDatos } from '../nicos/datos'
+import { crearPantallaInicio } from './pantallaInicio'
+import { crearEntorno } from './entorno'
+import { crearSombras } from './sombra'
+import { crearEtiquetas, type Entrada } from './etiquetas'
 
 const SIN_RESALTE = new Set(['tapa', 'chasis']) // inicio y contacto muestran el portátil entero
 const FOV = 35
-const MARGEN = 0.86 // fracción del campo visual que puede ocupar el portátil (el resto es margen)
+const MARGEN = 0.93 // fracción del campo visual que puede ocupar el portátil (el resto es margen)
 const RAD = Math.PI / 180
+const LID_ABIERTA = 110 // ángulo de la tapa en el modelo (blender/laptop.py: LID_OPEN_DEG)
+const LID_CERRANDO = 10 // ángulo inicial de la intro (casi cerrada)
+// Eje de la bisagra (three, Y arriba): HINGE de laptop.py (x, z, -y) = borde trasero inferior de la tapa junto al chasis.
+const BISAGRA = new THREE.Vector3(0, 0.0105, -0.1085)
+const SEPARACION_TRAY = 0.75 // trayectoria: explosión algo más compacta para que llene el escenario
 
 /** Estado animable: separación de cada pieza (fracción de explode.json) + parámetros de cámara. */
 type Estado = Record<string, number>
@@ -30,10 +41,13 @@ interface Paso {
   foco?: string
   /** Cuánto se desplaza el punto de mira hacia la pieza (0..0.3). */
   fw?: number
+  /** Luz extra para leer los interiores (0..1). */
+  lum?: number
 }
 
 // Una sección = un estado completo (nada es acumulativo; al subir se invierte solo).
-const TODO: Record<string, number> = { tapa: 1, pantalla: 1, teclado: 1, placa: 1, cpu: 1, antena: 1, bateria: 1, disco: 1 }
+const K = SEPARACION_TRAY
+const TODO: Record<string, number> = { tapa: 0.62, pantalla: 0.62, teclado: 0.7, placa: K, cpu: K, antena: K, bateria: K, disco: K }
 const PASOS: Paso[] = [
   { id: 'inicio', e: {}, az: -33, el: 28, zoom: 1 },
   { id: 'sistemas', e: { pantalla: 2 }, az: -18, el: 20, zoom: 1.1, foco: 'pantalla', fw: 0.25 },
@@ -42,32 +56,40 @@ const PASOS: Paso[] = [
   { id: 'comunidad', e: { antena: 3 }, az: -55, el: 26, zoom: 1.15, foco: 'antena', fw: 0.3 },
   { id: 'proyectos', e: { teclado: 0.75, bateria: 0.8 }, az: -35, el: 34, zoom: 1.15, foco: 'bateria', fw: 0.3 },
   { id: 'ensenanza', e: { teclado: 0.7 }, tilt: 0.22, az: -30, el: 32, zoom: 1.1, foco: 'teclado', fw: 0.25 },
-  { id: 'trayectoria', e: TODO, az: -35, el: 28, zoom: 1, foco: 'disco', fw: 0.1 },
+  { id: 'trayectoria', e: TODO, az: -35, el: 38, zoom: 0.86, foco: 'disco', fw: 0.1, lum: 1 },
   { id: 'contacto', e: {}, az: -33, el: 28, zoom: 1 },
 ]
 
 export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Promise<void> {
   const { reduce } = opc
   const url = stage.dataset.modelo ?? 'models/laptop.glb'
+  const PR = Math.min(window.devicePixelRatio, 1.5)
 
   const canvas = document.createElement('canvas')
   canvas.setAttribute('aria-hidden', 'true')
   canvas.className = 'escena'
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5))
+  renderer.setPixelRatio(PR)
   renderer.outputColorSpace = THREE.SRGBColorSpace
-  renderer.toneMapping = THREE.NeutralToneMapping
+  renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1
   renderer.setClearColor(0x000000, 0)
 
+  // Iluminación de producto: entorno de estudio (reflejos), luz principal, contraluz cálido de acento y relleno frío.
   const scene = new THREE.Scene()
-  const pmrem = new THREE.PMREMGenerator(renderer)
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
-  scene.environmentIntensity = 0.9
-  pmrem.dispose()
-  const luz = new THREE.DirectionalLight(0xffffff, 1.4)
+  scene.environment = crearEntorno(renderer)
+  const luz = new THREE.DirectionalLight(0xffffff, 1.1)
   luz.position.set(-0.6, 1, 0.8)
   scene.add(luz)
+  const contraluz = new THREE.DirectionalLight(0xff7a45, 0.04)
+  contraluz.position.set(0.9, 0.5, -1)
+  scene.add(contraluz)
+  const relleno = new THREE.DirectionalLight(0x9fb8ff, 0.35)
+  relleno.position.set(1, 0.2, 0.8)
+  scene.add(relleno)
+  // Brillo de la pantalla sobre la cubierta (falso): una luz puntual tenue delante de la pantalla.
+  const brilloPantalla = new THREE.PointLight(0xdfe6f5, 0, 0, 2)
+  scene.add(brilloPantalla)
 
   const camera = new THREE.PerspectiveCamera(FOV, 1, 0.01, 20)
 
@@ -75,9 +97,44 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   scene.add(raiz)
   const porNombre = new Map<string, Pieza>(piezas.map((p) => [p.nombre, p]))
 
-  // ---- Estado animable ----
+  // La tapa y la pantalla cuelgan de un pivote usado SOLO para el ángulo de la tapa; la explosión sigue moviendo los nodos.
+  const pivote = new THREE.Group()
+  raiz.add(pivote)
+  pivote.add(porNombre.get('tapa')!.nodo, porNombre.get('pantalla')!.nodo)
+  const lid = { a: LID_ABIERTA } // grados respecto a la base
+  const hc = new THREE.Vector3()
+  const girarTapa = () => {
+    const th = (LID_ABIERTA - lid.a) * RAD
+    // La bisagra viaja con la tapa (explosión) para que el giro (intro/parpadeo) sea siempre sobre su borde.
+    const t = porNombre.get('tapa')!
+    hc.copy(BISAGRA).add(t.nodo.position).sub(t.reposo)
+    const c = Math.cos(th)
+    const s = Math.sin(th)
+    pivote.rotation.set(th, 0, 0)
+    pivote.position.set(0, hc.y - (hc.y * c - hc.z * s), hc.z - (hc.y * s + hc.z * c))
+    raiz.updateMatrixWorld(true)
+  }
+
+  // ---- Tema (claro/oscuro): exposición, entorno, tono del aluminio y fuerza de la sombra ----
+  const bg = new THREE.Color('#161B26')
+  const tema = { claro: false, expo: 1, env: 0.8, alu: 1, sombra: 0.55 }
+  const leerTema = () => {
+    const cs = getComputedStyle(document.documentElement)
+    const b = cs.getPropertyValue('--base').trim()
+    if (b) bg.set(b)
+    tema.claro = cs.colorScheme.includes('light')
+    tema.expo = tema.claro ? 0.92 : 1
+    tema.env = tema.claro ? 0.62 : 0.8
+    tema.alu = tema.claro ? 0.78 : 1
+    tema.sombra = tema.claro ? 1 : 0.8
+  }
+  leerTema()
+  const NEUTROS = new Set(['pantalla', 'acento', 'pistas'])
+  const matsInfo = piezas.flatMap((p) => p.mats.map((x) => ({ p, m: x.m, base: x.m.color.clone(), alu: x.m.name === 'aluminio', neutro: NEUTROS.has(x.m.name) })))
+
+  // ---- Estado animable: separación de cada pieza (fracción de explode.json) + parámetros de cámara ----
   const claves = piezas.map((p) => p.nombre)
-  const S: Estado = { tilt: 0, az: PASOS[0].az, el: PASOS[0].el, zoom: 1, fw: 0, fx: 0, fy: 0, fz: 0 }
+  const S: Estado = { tilt: 0, az: PASOS[0].az, el: PASOS[0].el, zoom: 1, fw: 0, fx: 0, fy: 0, fz: 0, lum: 0 }
   for (const k of claves) S[k] = 0
   let sucio = true
   const pedir = () => {
@@ -86,6 +143,7 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   const offT = porNombre.get('tapa')!.offset
   const tmpV = new THREE.Vector3()
   const aplicar = (est: Estado) => {
+    raiz.position.y = 0
     for (const p of piezas) {
       p.nodo.position.copy(p.reposo)
       const k = est[p.nombre] ?? 0
@@ -96,13 +154,15 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
       } else p.nodo.position.addScaledVector(p.offset, k)
       if (p.nombre === 'teclado') p.nodo.rotation.x = est.tilt ?? 0
     }
+    pivote.rotation.set(0, 0, 0)
+    pivote.position.set(0, 0, 0)
     raiz.updateMatrixWorld(true)
   }
   const centroDe = (n: string): THREE.Vector3 => new THREE.Box3().expandByObject(porNombre.get(n)!.nodo).getCenter(new THREE.Vector3())
 
   // Un estado completo por sección (con el punto de mira calculado sobre la pose real).
   const estados: Estado[] = PASOS.map((paso) => {
-    const est: Estado = { tilt: paso.tilt ?? 0, az: paso.az, el: paso.el, zoom: paso.zoom, fw: paso.foco ? (paso.fw ?? 0) : 0, fx: 0, fy: 0, fz: 0 }
+    const est: Estado = { tilt: paso.tilt ?? 0, az: paso.az, el: paso.el, zoom: paso.zoom, fw: paso.foco ? (paso.fw ?? 0) : 0, fx: 0, fy: 0, fz: 0, lum: paso.lum ?? 0 }
     for (const k of claves) est[k] = paso.e[k] ?? 0
     aplicar(est)
     if (paso.foco) {
@@ -120,24 +180,38 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   Object.assign(S, estados[0])
   aplicar(S)
 
-  // ---- Resaltado de la pieza activa: aristas en color de acento ----
+  // Piezas de cada sección (data-pieza) y separación objetivo de cada una (para mostrar la etiqueta al estar separada).
+  const piezaDe = (id: string) => document.getElementById(id)?.dataset.pieza
+  const piezaHero = piezaDe('inicio')
+  const piezaSistemas = piezaDe('sistemas')
+  const piezaContacto = piezaDe('contacto')
+  const piezaTray = piezaDe('trayectoria')
+
+  // ---- Resaltado: aristas en acento (Line2: ancho constante en píxeles y sin dientes) + atenuado del resto ----
   const colorAcento = new THREE.Color('#FF7A45')
+  const colorNeutro = new THREE.Color('#D7DCE4')
   const leerAcento = () => {
-    const v = getComputedStyle(document.documentElement).getPropertyValue('--acc').trim()
+    const cs = getComputedStyle(document.documentElement)
+    const v = cs.getPropertyValue('--acc').trim()
     if (v) colorAcento.set(v)
+    const n = cs.getPropertyValue('--sec').trim()
+    if (n) colorNeutro.set(n)
   }
-  const bordes = new Map<string, THREE.LineBasicMaterial>()
-  const bordesDe = (p: Pieza): THREE.LineBasicMaterial => {
+  leerAcento()
+  const bordes = new Map<string, LineMaterial>()
+  const resolucion = new THREE.Vector2(1, 1)
+  const bordesDe = (p: Pieza): LineMaterial => {
     let mat = bordes.get(p.nombre)
     if (mat) return mat
-    mat = new THREE.LineBasicMaterial({ color: colorAcento, transparent: true, opacity: 0, depthTest: true })
+    mat = new LineMaterial({ color: colorAcento.getHex(), linewidth: 1.5 * PR, transparent: true, opacity: 0, depthTest: true, worldUnits: false })
+    mat.resolution.copy(resolucion)
     bordes.set(p.nombre, mat)
     const meshes: THREE.Mesh[] = []
     p.nodo.traverse((x) => {
       if ((x as THREE.Mesh).isMesh) meshes.push(x as THREE.Mesh)
     })
     for (const mesh of meshes) {
-      const l = new THREE.LineSegments(new THREE.EdgesGeometry(mesh.geometry, 30), mat)
+      const l = new LineSegments2(new LineSegmentsGeometry().fromEdgesGeometry(new THREE.EdgesGeometry(mesh.geometry, 30)), mat)
       l.renderOrder = 2
       mesh.add(l)
     }
@@ -148,52 +222,82 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     }
     return mat
   }
-  const tinte: Record<string, number> = {}
-  for (const p of piezas) tinte[p.nombre] = 0
+  const tinte: Record<string, number> = {} // 0..1: arista de acento de la pieza activa
+  const atenuar: Record<string, number> = {} // 0..1: pieza no activa (se funde hacia el fondo)
+  const vista = { todas: 0 } // 0..1: vista de explosión completa (contorno neutro fino en todas)
+  for (const p of piezas) {
+    tinte[p.nombre] = 0
+    atenuar[p.nombre] = 0
+  }
+  const tmpC = new THREE.Color()
   const pintar = () => {
     for (const p of piezas) {
       const h = tinte[p.nombre]
-      if (h === 0 && !bordes.has(p.nombre)) continue
+      const ver = Math.max(h, vista.todas)
+      if (ver === 0 && !bordes.has(p.nombre)) continue
       const mat = bordesDe(p)
-      mat.color.copy(colorAcento)
-      mat.opacity = 0.9 * h
-      mat.visible = h > 0
+      mat.color.copy(colorNeutro).lerp(colorAcento, h)
+      mat.opacity = Math.max(0.9 * h, (p.nombre === 'tapa' || p.nombre === 'pantalla' ? 0 : 0.2) * vista.todas)
+      mat.linewidth = (h > 0.5 ? 1.6 : 1.1) * PR
+      mat.visible = mat.opacity > 0.01
+    }
+    for (const x of matsInfo) {
+      tmpC.copy(x.base)
+      if (x.alu) tmpC.multiplyScalar(tema.alu)
+      if (!x.neutro) tmpC.lerp(bg, 0.24 * atenuar[x.p.nombre])
+      x.m.color.copy(tmpC)
     }
     pedir()
   }
   const activar = (nombre: string | undefined) => {
     leerAcento()
+    const todas = nombre !== undefined && nombre === piezaTray
+    const enfoque = nombre !== undefined && !todas && !SIN_RESALTE.has(nombre)
+    gsap.killTweensOf(vista)
+    if (reduce) vista.todas = todas ? 1 : 0
+    else gsap.to(vista, { todas: todas ? 1 : 0, duration: 0.4, ease: 'power1.out', onUpdate: pintar })
     for (const p of piezas) {
-      const objetivo = p.nombre === nombre && !SIN_RESALTE.has(p.nombre) ? 1 : 0
+      const objetivo = p.nombre === nombre && enfoque ? 1 : 0
+      const dim = enfoque && p.nombre !== nombre ? 1 : 0
       gsap.killTweensOf(tinte, p.nombre)
-      if (reduce) tinte[p.nombre] = objetivo
-      else if (tinte[p.nombre] !== objetivo) gsap.to(tinte, { [p.nombre]: objetivo, duration: 0.3, ease: 'power1.out', onUpdate: pintar })
+      gsap.killTweensOf(atenuar, p.nombre)
+      if (reduce) {
+        tinte[p.nombre] = objetivo
+        atenuar[p.nombre] = dim
+      } else {
+        if (tinte[p.nombre] !== objetivo) gsap.to(tinte, { [p.nombre]: objetivo, duration: 0.3, ease: 'power1.out', onUpdate: pintar })
+        if (atenuar[p.nombre] !== dim) gsap.to(atenuar, { [p.nombre]: dim, duration: 0.45, ease: 'power1.out', onUpdate: pintar })
+      }
     }
     pintar()
   }
   activar(stage.dataset.active)
   new MutationObserver(() => activar(stage.dataset.active)).observe(stage, { attributes: true, attributeFilter: ['data-active'] })
-  // El tema (claro/oscuro) cambia --acc: se relee al alternarlo.
-  new MutationObserver(() => {
+  // El tema (claro/oscuro) cambia --acc, --base...: se relee al alternarlo.
+  const alCambiarTemaGlobal = () => {
     leerAcento()
+    leerTema()
+    aplicarTema()
     pintar()
-  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
-    leerAcento()
-    pintar()
-  })
+  }
+  const aplicarTema = () => {
+    renderer.toneMappingExposure = tema.expo
+    contraluz.intensity = tema.claro ? 0.012 : 0.04
+  }
+  aplicarTema()
+  new MutationObserver(alCambiarTemaGlobal).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+  window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', alCambiarTemaGlobal)
 
-  // ---- Pantalla: en "sistemas" muestra el canvas del efecto de la tarjeta activa (la más cercana al centro) ----
+  // ---- Sombras de contacto y etiquetas ----
+  const sombras = crearSombras(scene, claves)
+  const etiquetas = crearEtiquetas()
+
+  // ---- Pantalla: reposo (saludo tecleado), sistemas (canvas de la tarjeta activa) y contacto (arranque de nicOS) ----
+  const pant = { brillo: 1 } // 0 apagada .. 1 encendida
+  const pi = crearPantallaInicio(reduce)
   const matPantalla = piezas.flatMap((p) => p.mats).find((x) => x.m.name === 'pantalla')?.m
+  let tickPantalla: ((t: number) => void) | null = null
   if (matPantalla) {
-    const orig = {
-      color: matPantalla.color.clone(),
-      emissive: matPantalla.emissive.clone(),
-      intensidad: matPantalla.emissiveIntensity,
-      map: matPantalla.map,
-      emissiveMap: matPantalla.emissiveMap,
-    }
-    const piezaSistemas = document.getElementById('sistemas')?.dataset.pieza // stage.dataset.active guarda la pieza, no la sección
     // Una textura por canvas; si el canvas cambia de tamaño (resize) la GPU necesita una textura nueva.
     const texturas = new Map<HTMLCanvasElement, { tex: THREE.CanvasTexture; w: number; h: number }>()
     let lienzoActual: HTMLCanvasElement | null = null
@@ -207,13 +311,14 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
         const tex = new THREE.CanvasTexture(cv)
         tex.colorSpace = THREE.SRGBColorSpace
         tex.flipY = false // UV de glTF: origen arriba a la izquierda
+        tex.anisotropy = 4
         t = { tex, w: cv.width, h: cv.height }
         texturas.set(cv, t)
       }
       return t.tex
     }
     const aplicarTextura = (cv: HTMLCanvasElement) => {
-      const tex = texDe(temaClaro() && cv !== yaOscuro ? aOscuro(cv) : cv)
+      const tex = texDe(temaClaro() && !yaOscuro(cv) ? aOscuro(cv) : cv)
       tex.needsUpdate = true
       if (matPantalla.map !== tex) {
         matPantalla.map = tex
@@ -224,13 +329,18 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     const tonoPantalla = () => {
       matPantalla.color.set(0xffffff)
       matPantalla.emissive.set(0xffffff)
-      matPantalla.emissiveIntensity = 0.6
+      matPantalla.emissiveIntensity = 0.75
+      matPantalla.roughness = 0.6
+      matPantalla.metalness = 0
     }
     // En tema claro los canvas son casi blancos y la pantalla parecería un folio: para la textura 3D se usa una copia
     // en oscuro (invertida y con el matiz girado 180°, así el acento sigue siendo naranja). La pantalla siempre "enciende" oscura.
     const temaClaro = () => getComputedStyle(document.documentElement).colorScheme.includes('light')
     const oscuros = new Map<HTMLCanvasElement, HTMLCanvasElement>()
-    let yaOscuro: HTMLCanvasElement | null = null // la pantalla de nicOS ya se dibuja siempre en oscuro
+    const datos = leerDatos()
+    const pn = datos ? crearPantallaNicos(datos, reduce) : null
+    // Los canvas de nicOS y del reposo ya se dibujan siempre en oscuro.
+    const yaOscuro = (cv: HTMLCanvasElement) => cv === pn?.canvas || cv === pi.canvas
     const aOscuro = (cv: HTMLCanvasElement): HTMLCanvasElement => {
       let o = oscuros.get(cv)
       if (!o) {
@@ -247,20 +357,19 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
       c.filter = 'none'
       return o
     }
-    const ponerPantalla = (cv: HTMLCanvasElement | null) => {
+    // Fuera del inicio, el último fotograma estático del reposo se ve atenuado (~50%).
+    const brilloEmisivo = (cv: HTMLCanvasElement, hero: boolean) => {
+      const v = cv === pi.canvas && !hero ? 0.38 : 0.75
+      if (matPantalla.emissiveIntensity !== v) {
+        matPantalla.emissiveIntensity = v
+        pedir()
+      }
+    }
+    const ponerPantalla = (cv: HTMLCanvasElement) => {
       if (cv === lienzoActual) return
       lienzoActual = cv
-      if (!cv) {
-        matPantalla.color.copy(orig.color)
-        matPantalla.emissive.copy(orig.emissive)
-        matPantalla.emissiveIntensity = orig.intensidad
-        matPantalla.map = orig.map
-        matPantalla.emissiveMap = orig.emissiveMap
-        matPantalla.needsUpdate = true
-      } else {
-        tonoPantalla()
-        aplicarTextura(cv)
-      }
+      tonoPantalla()
+      aplicarTextura(cv)
       pedir()
     }
     const alCambiarTema = () => {
@@ -276,18 +385,19 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
       aplicarTextura(cv)
       pedir()
     })
-    // Contacto: arranque de nicOS dibujado en un canvas 2D (se redibuja solo mientras la sección está activa).
-    const datos = leerDatos()
-    const pn = datos ? crearPantallaNicos(datos, reduce) : null
-    yaOscuro = pn?.canvas ?? null
-    const piezaContacto = document.getElementById('contacto')?.dataset.pieza
     let enContacto = false
-    gsap.ticker.add((t) => {
+    let enHero = false
+    tickPantalla = (t: number) => {
       const act = stage.dataset.active
       if (pn && act === piezaContacto) {
+        if (enHero) {
+          enHero = false
+          pi.completar()
+        }
         if (!enContacto) {
           enContacto = true
           pn.reiniciar()
+          parpadeoTapa()
         }
         const nuevo = pn.dibujar(t)
         ponerPantalla(pn.canvas)
@@ -295,11 +405,44 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
           aplicarTextura(pn.canvas)
           pedir()
         }
-      } else {
-        enContacto = false
-        ponerPantalla(act === piezaSistemas ? canvasActivo() : null)
+        return
       }
-    })
+      enContacto = false
+      if (act === piezaHero) {
+        enHero = true
+        const nuevo = pi.dibujar(t, pant.brillo)
+        ponerPantalla(pi.canvas)
+        brilloEmisivo(pi.canvas, true)
+        if (nuevo) {
+          aplicarTextura(pi.canvas)
+          pedir()
+        }
+      } else {
+        if (enHero) {
+          enHero = false
+          pi.completar()
+          if (lienzoActual === pi.canvas) {
+            aplicarTextura(pi.canvas)
+            pedir()
+          }
+        }
+        const cv = act === piezaSistemas ? (canvasActivo() ?? pi.canvas) : pi.canvas
+        ponerPantalla(cv)
+        brilloEmisivo(cv, false)
+      }
+    }
+    gsap.ticker.add(tickPantalla)
+  }
+
+  // Parpadeo de la tapa al llegar a contacto: se cierra un poco y se reabre mientras "reinicia" (nicOS arranca en negro).
+  let parpadeo: gsap.core.Timeline | null = null
+  function parpadeoTapa() {
+    if (reduce || lid.a < LID_ABIERTA - 1) return
+    parpadeo?.kill()
+    parpadeo = gsap
+      .timeline({ onUpdate: pedir })
+      .to(lid, { a: 62, duration: 0.3, ease: 'power2.in' })
+      .to(lid, { a: LID_ABIERTA, duration: 0.7, ease: 'back.out(1.4)' })
   }
 
   // ---- Tamaño: el canvas cubre el viewport; el portátil se centra en la zona del escenario ----
@@ -307,6 +450,7 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   let alto = 0
   let zonaW = 1
   let zonaH = 1
+  const zona = { l: 0, t: 0, r: 1, b: 1 }
   const ajustar = () => {
     const W = document.documentElement.clientWidth
     const H = window.innerHeight
@@ -324,14 +468,19 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     const cy = cab + zonaH / 2
     camera.setViewOffset(W, H, W / 2 - cx, H / 2 - cy, W, H)
     camera.updateProjectionMatrix()
+    Object.assign(zona, { l: cx - zonaW / 2, r: cx + zonaW / 2, t: cy - zonaH / 2, b: cy + zonaH / 2 })
+    renderer.getDrawingBufferSize(resolucion)
+    for (const m of bordes.values()) m.resolution.copy(resolucion)
     pedir()
   }
   new ResizeObserver(ajustar).observe(stage)
   new ResizeObserver(ajustar).observe(document.documentElement)
 
-  // ---- Cámara: siempre encuadra TODO el portátil en su pose actual ----
+  // ---- Cámara: siempre encuadra TODO el portátil en su pose actual (con la tapa abierta) ----
   const mouse = { x: 0, y: 0, sx: 0, sy: 0 }
   const caja = new THREE.Box3()
+  const cajas = new Map<string, THREE.Box3>(claves.map((k) => [k, new THREE.Box3()]))
+  const desp = new Map<string, number>()
   const centro = new THREE.Vector3()
   const mira = new THREE.Vector3()
   const dir = new THREE.Vector3()
@@ -339,9 +488,16 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   const arr = new THREE.Vector3()
   const rel = new THREE.Vector3()
   const ARRIBA = new THREE.Vector3(0, 1, 0)
-  const colocarCamara = () => {
+  const medir = () => {
     caja.makeEmpty()
-    for (const p of piezas) caja.expandByObject(p.nodo)
+    for (const p of piezas) {
+      const c = cajas.get(p.nombre)!
+      c.makeEmpty().expandByObject(p.nodo)
+      caja.union(c)
+      desp.set(p.nombre, p.nodo.position.distanceTo(p.reposo))
+    }
+  }
+  const colocarCamara = () => {
     caja.getCenter(centro)
     // Punto de mira: el centro del conjunto, desplazado hacia la pieza activa.
     mira.set(S.fx, S.fy, S.fz).sub(centro).multiplyScalar(S.fw).add(centro)
@@ -367,9 +523,51 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     camera.lookAt(mira)
   }
 
+  // ---- Etiquetas: punto de anclaje de cada pieza proyectado a la pantalla ----
+  const pr = new THREE.Vector3()
+  const entradas: Entrada[] = []
+  const progresoPieza = (n: string): number => {
+    const paso = PASOS.find((x) => piezaDe(x.id) === n && x.e[n])
+    return paso ? Math.min(1, Math.max(0, (S[n] ?? 0) / paso.e[n])) : 0
+  }
+  const actualizarEtiquetas = (bob: number, instante: boolean): boolean => {
+    const act = stage.dataset.active
+    entradas.length = 0
+    let todas = false
+    if (act && act === piezaTray && (reduce || S.tapa / TODO.tapa > 0.9)) {
+      todas = true
+      for (const n of claves) entradas.push({ id: n, x: 0, y: 0, x0: 0, x1: 0, y0: 0, y1: 0 })
+    } else if (act && !SIN_RESALTE.has(act) && act !== piezaTray && (reduce || progresoPieza(act) > 0.55)) entradas.push({ id: act, x: 0, y: 0, x0: 0, x1: 0, y0: 0, y1: 0 })
+    for (const e of entradas) {
+      const cj = cajas.get(e.id)!
+      cj.getCenter(pr)
+      pr.y += bob
+      pr.project(camera)
+      e.x = Math.round((pr.x * 0.5 + 0.5) * ancho)
+      e.y = Math.round((-pr.y * 0.5 + 0.5) * alto)
+      e.x0 = e.y0 = Infinity
+      e.x1 = e.y1 = -Infinity
+      for (let i = 0; i < 8; i++) {
+        pr.set(i & 1 ? cj.max.x : cj.min.x, (i & 2 ? cj.max.y : cj.min.y) + bob, i & 4 ? cj.max.z : cj.min.z).project(camera)
+        const px = (pr.x * 0.5 + 0.5) * ancho
+        const py = (-pr.y * 0.5 + 0.5) * alto
+        e.x0 = Math.min(e.x0, px)
+        e.x1 = Math.max(e.x1, px)
+        e.y0 = Math.min(e.y0, py)
+        e.y1 = Math.max(e.y1, py)
+      }
+    }
+    return etiquetas.actualizar(entradas, zona, todas, instante)
+  }
+
   // ---- Bucle bajo demanda (el ticker de gsap se detiene con la pestaña oculta) ----
+  const heroVisible = () => stage.dataset.active === piezaHero && window.scrollY < window.innerHeight * 0.8
+  const bobEstado = { env: 0, n: 0 }
+  let introHecha = reduce
+  const normalPantalla = new THREE.Vector3(0, 0.342, 0.94)
   const dibujar = () => {
     if (document.hidden || !ancho) return
+    let bob = 0
     if (!reduce) {
       const dx = mouse.x - mouse.sx
       const dy = mouse.y - mouse.sy
@@ -378,11 +576,35 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
         mouse.sy += dy * 0.06
         sucio = true
       }
+      // Flotación muy suave (<= 2,5 mm ≈ 4 px) solo mientras se ve el inicio; a ~30 fps y se apaga con suavidad.
+      const objetivo = introHecha && heroVisible() ? 1 : 0
+      if (bobEstado.env > 0.001 || objetivo) {
+        bobEstado.env += (objetivo - bobEstado.env) * 0.05
+        if (bobEstado.env < 0.001) bobEstado.env = 0
+        if ((bobEstado.n++ & 1) === 0) sucio = true
+      }
+      bob = 0.0025 * bobEstado.env * Math.sin((performance.now() / 1000) * ((Math.PI * 2) / 6.5))
     }
     if (!sucio) return
     sucio = false
     aplicar(S)
+    medir()
     colocarCamara()
+    girarTapa()
+    raiz.position.y = bob
+    raiz.updateMatrixWorld(true)
+    // Luz de entorno extra en la vista de explosión completa (interiores legibles).
+    scene.environmentIntensity = tema.env * (1 + 0.45 * S.lum)
+    luz.intensity = 1.1 + 0.5 * S.lum
+    relleno.intensity = 0.35 + 0.4 * S.lum
+    // Brillo de la pantalla: delante de ella, sobre la cubierta.
+    cajas.get('pantalla')!.getCenter(brilloPantalla.position)
+    brilloPantalla.position.addScaledVector(normalPantalla, 0.3)
+    brilloPantalla.position.y += bob
+    brilloPantalla.intensity = 0.006 * pant.brillo * (1 - 0.5 * S.lum)
+    sombras.actualizar(cajas, desp, caja.min.y, bob, tema.sombra)
+    camera.updateMatrixWorld()
+    if (actualizarEtiquetas(bob, reduce)) sucio = true
     renderer.render(scene, camera)
   }
   gsap.ticker.add(dibujar)
@@ -414,7 +636,8 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
         const dest = id ? document.getElementById(id) : null
         if (!dest) return
         ev.preventDefault()
-        const off = id === 'inicio' ? 0 : -((cabecera?.offsetHeight ?? 56) + 16)
+        const sm = parseFloat(getComputedStyle(dest).scrollMarginTop || '0')
+        const off = id === 'inicio' ? 0 : sm ? -sm : -((cabecera?.offsetHeight ?? 56) + 16)
         lenis.scrollTo(dest, { offset: off })
         history.pushState(null, '', '#' + id)
       })
@@ -436,6 +659,15 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   }
 
   document.addEventListener('visibilitychange', pedir)
+  // Intro: solo si la persona sigue en el inicio. La tapa arranca casi cerrada y la pantalla apagada.
+  const hacerIntro = !reduce && stage.dataset.active === piezaHero && window.scrollY < window.innerHeight * 0.4
+  if (hacerIntro) {
+    lid.a = LID_CERRANDO
+    pant.brillo = 0
+  } else {
+    pi.completar()
+  }
+  tickPantalla?.(gsap.ticker.time)
   ajustar()
   document.body.appendChild(canvas)
   pedir()
@@ -445,4 +677,15 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     stage.classList.add('is3d')
     canvas.classList.add('is3d')
   })
+  if (hacerIntro) {
+    gsap.set(canvas, { y: 26, scale: 0.97 })
+    // En pausa hasta pintar un par de fotogramas con la tapa cerrada: así la compilación de shaders no se come el arranque.
+    const intro = gsap
+      .timeline({ paused: true, onUpdate: pedir, onComplete: () => (introHecha = true) })
+      .to(canvas, { y: 0, scale: 1, duration: 1.5, ease: 'power2.out', clearProps: 'transform' }, 0)
+      .to(lid, { a: LID_ABIERTA, duration: 1.25, ease: 'back.out(1.15)' }, 0.1)
+      .to(pant, { brillo: 1, duration: 0.6, ease: 'power1.inOut' }, 1.0)
+      .call(() => pi.empezar(gsap.ticker.time), [], 1.6)
+    requestAnimationFrame(() => requestAnimationFrame(() => intro.play(0)))
+  }
 }

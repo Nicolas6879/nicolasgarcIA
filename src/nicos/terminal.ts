@@ -308,7 +308,7 @@ export function crearTerminal(host: HTMLElement, d: DatosNicos, g: Ganchos, opc:
   })
 
   texto(t.bienvenida)
-  texto(t.escribe, 'nt-dim')
+  if (!opc.compacta) texto(t.escribe, 'nt-dim') // en la mini-terminal basta el placeholder
 
   return { el, enfocar: () => input.focus({ preventScroll: true }) }
 }

@@ -22,7 +22,7 @@ export const en: Contenido = {
     },
     descargarCv: 'Download CV',
     cvPropio: 'cv/Juan-Nicolas-Garcia-CV-EN.pdf',
-    cvOtro: { texto: 'Versión en español (PDF)', archivo: 'cv/Juan-Nicolas-Garcia-CV-ES.pdf' },
+    cvOtro: { texto: 'CV in Spanish (PDF)', archivo: 'cv/Juan-Nicolas-Garcia-CV-ES.pdf' },
     temaAria: 'Switch between light and dark theme',
     idioma: { texto: 'ES', aria: 'ES – Ver en español', lang: 'es', ruta: 'es/' },
     capturaDe: 'Screenshot of',
@@ -45,6 +45,12 @@ export const en: Contenido = {
     avisoCopiado: 'Email copied',
     avisoFallo: 'Could not copy; the email is now selected',
     pie: '© 2026',
+    piezas: { tapa: 'Lid', pantalla: 'Screen', placa: 'Motherboard', cpu: 'Processor', antena: 'Antenna', bateria: 'Battery', teclado: 'Keyboard', disco: 'Drive', chasis: 'Chassis' },
+    pieLinea: 'Designed and built by Juan Nicolás García · three.js, Blender, TypeScript',
+    pieCodigo: 'Source code',
+    pieAtajo: 'Press',
+    cvEtiqueta: 'CV',
+    cvFabAria: 'Download CV',
     pct: '%',
   },
 
@@ -104,13 +110,13 @@ export const en: Contenido = {
       },
     ],
     otros:
-      "Also: multi-plant food orders and costing, a Power BI dashboard hub, a third-party due-diligence form (SAGRILAFT, Colombia's anti-money-laundering rules) with PDF output, and maintenance of the ERP used by about 100 people.",
+      "Also: multi-plant food orders and costing, a Power BI dashboard hub, a third-party due-diligence form (SAGRILAFT, Colombia’s anti-money-laundering rules) with PDF output, and maintenance of the ERP used by about 100 people.",
   },
 
   tecnologias: {
     pieza: 'placa',
     titulo: 'The pieces I build with',
-    intro: 'Hover over each chip to see where I use it in production.',
+    intro: 'Where each one runs in production.',
     chips: [
       { nombre: 'Vue 3 + TypeScript', donde: 'Frontend of the 8 systems in production.' },
       { nombre: 'Laravel / PHP', donde: 'APIs and business logic for those systems.' },
@@ -141,7 +147,7 @@ export const en: Contenido = {
       },
       {
         nombre: 'Internal AI assistant',
-        texto: "I am part of the team building an assistant for the company's knowledge and reports.",
+        texto: "I am part of the team building an assistant for the company’s knowledge and reports.",
       },
     ],
   },
@@ -149,7 +155,7 @@ export const en: Contenido = {
   comunidad: {
     pieza: 'antena',
     titulo: 'Part of the community',
-    rol: 'Hedera Developer & Community Ambassador in Colombia (2025 – present)',
+    rol: { texto: 'Hedera Developer & Community Ambassador in Colombia', fechas: '2025 – present' },
     logros: [
       { valor: '1st', texto: 'Web3 cybersecurity challenge (CTF), Hedera DevDay, ETHDenver 2026' },
       { valor: '2nd', texto: 'Hedera on-chain automation bounty, ETHDenver 2026' },
@@ -169,23 +175,27 @@ export const en: Contenido = {
     items: [
       {
         nombre: 'Willys por Colombia',
+        meta: 'three.js · live AI music',
         texto: 'A driving game in three.js with music generated live by AI, which changes with the region you drive through.',
         demo: 'https://willys-por-colombia.vercel.app',
         repo: 'https://github.com/Nicolas6879/willys-por-colombia',
       },
       {
         nombre: 'VerifiChain Visual',
+        meta: 'Computer vision · Hedera',
         texto: 'An agent that inspects metal and concrete with computer vision and records every verdict on Hedera.',
         repo: 'https://github.com/Nicolas6879/verifichain-vision-oracle',
       },
       {
         nombre: 'x402 Guard',
+        meta: 'AI agents · Payments',
         texto: 'A payment proxy for AI agents: the agent never holds the keys and every payment is publicly audited.',
         repo: 'https://github.com/Nicolas6879/x402-guard',
       },
       {
         nombre: 'Hive Protocol',
-        texto: 'Three AI agents that propose, execute and validate knowledge with no human in the loop. 2nd place at ETHDenver 2026.',
+        meta: '2nd place · ETHDenver 2026',
+        texto: 'Three AI agents that propose, execute and validate knowledge with no human in the loop.',
         repo: 'https://github.com/Nicolas6879/HIVE',
       },
     ],

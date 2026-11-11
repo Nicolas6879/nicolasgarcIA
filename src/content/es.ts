@@ -24,7 +24,7 @@ export const es: Contenido = {
     },
     descargarCv: 'Descargar CV',
     cvPropio: 'cv/Juan-Nicolas-Garcia-CV-ES.pdf',
-    cvOtro: { texto: 'English version (PDF)', archivo: 'cv/Juan-Nicolas-Garcia-CV-EN.pdf' },
+    cvOtro: { texto: 'CV en inglés (PDF)', archivo: 'cv/Juan-Nicolas-Garcia-CV-EN.pdf' },
     temaAria: 'Cambiar tema claro u oscuro',
     idioma: { texto: 'EN', aria: 'EN – View in English', lang: 'en', ruta: '' },
     capturaDe: 'Captura de',
@@ -47,6 +47,12 @@ export const es: Contenido = {
     avisoCopiado: 'Correo copiado',
     avisoFallo: 'No se pudo copiar; el correo quedó seleccionado',
     pie: '© 2026',
+    piezas: { tapa: 'Tapa', pantalla: 'Pantalla', placa: 'Placa base', cpu: 'Procesador', antena: 'Antena', bateria: 'Batería', teclado: 'Teclado', disco: 'Disco', chasis: 'Chasis' },
+    pieLinea: 'Diseñado y construido por Juan Nicolás García · three.js, Blender, TypeScript',
+    pieCodigo: 'Código fuente',
+    pieAtajo: 'Pulsa',
+    cvEtiqueta: 'CV',
+    cvFabAria: 'Descargar CV',
     pct: ' %',
   },
 
@@ -114,7 +120,7 @@ export const es: Contenido = {
   tecnologias: {
     pieza: 'placa',
     titulo: 'Las piezas con las que construyo',
-    intro: 'Pasa el cursor por cada chip para ver dónde lo uso en producción.',
+    intro: 'Dónde corre cada una en producción.',
     chips: [
       { nombre: 'Vue 3 + TypeScript', donde: 'Frontend de los 8 sistemas en producción.' },
       { nombre: 'Laravel / PHP', donde: 'APIs y lógica de negocio de esos sistemas.' },
@@ -155,7 +161,7 @@ export const es: Contenido = {
   comunidad: {
     pieza: 'antena',
     titulo: 'Conectado con la comunidad',
-    rol: 'Hedera Developer & Community Ambassador en Colombia (2025 – hoy)',
+    rol: { texto: 'Hedera Developer & Community Ambassador en Colombia', fechas: '2025 – hoy' },
     logros: [
       { valor: '1.º', texto: 'Reto de ciberseguridad Web3 (CTF), Hedera DevDay, ETHDenver 2026' },
       { valor: '2.º', texto: 'Bounty de automatización on-chain de Hedera, ETHDenver 2026' },
@@ -176,23 +182,27 @@ export const es: Contenido = {
     items: [
       {
         nombre: 'Willys por Colombia',
+        meta: 'three.js · música con IA en vivo',
         texto: 'Juego de manejo en three.js con música generada en vivo por IA, que cambia según la región por la que pasas.',
         demo: 'https://willys-por-colombia.vercel.app',
         repo: 'https://github.com/Nicolas6879/willys-por-colombia',
       },
       {
         nombre: 'VerifiChain Visual',
+        meta: 'Visión por computador · Hedera',
         texto: 'Agente que inspecciona metal y concreto con visión por computador y registra cada veredicto en Hedera.',
         repo: 'https://github.com/Nicolas6879/verifichain-vision-oracle',
       },
       {
         nombre: 'x402 Guard',
+        meta: 'Agentes de IA · Pagos',
         texto: 'Proxy de pagos para agentes de IA: el agente nunca tiene las llaves y cada pago queda auditado en público.',
         repo: 'https://github.com/Nicolas6879/x402-guard',
       },
       {
         nombre: 'Hive Protocol',
-        texto: 'Tres agentes de IA que proponen, ejecutan y validan conocimiento sin intervención humana. 2.º lugar en ETHDenver 2026.',
+        meta: '2.º lugar · ETHDenver 2026',
+        texto: 'Tres agentes de IA que proponen, ejecutan y validan conocimiento sin intervención humana.',
         repo: 'https://github.com/Nicolas6879/HIVE',
       },
     ],

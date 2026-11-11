@@ -12,6 +12,10 @@ document.getElementById('tema')?.addEventListener('click', () => {
   const actual =
     root.getAttribute('data-theme') ?? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
   const nuevo = actual === 'light' ? 'dark' : 'light'
+  if (!reduce) {
+    root.classList.add('tema-anim')
+    setTimeout(() => root.classList.remove('tema-anim'), 350)
+  }
   root.setAttribute('data-theme', nuevo)
   try {
     localStorage.setItem('tema', nuevo)
@@ -56,8 +60,7 @@ const abrirNicos = (v: 'terminal' | 'leeme') => {
 }
 const btnNicos = document.getElementById('nicos-abrir')
 const mac = /Mac|iPhone|iPad/.test(navigator.platform)
-const chip = btnNicos?.querySelector('kbd')
-if (chip && mac) chip.textContent = '⌘K'
+if (mac) document.querySelectorAll('.nicos-btn kbd, .foot kbd').forEach((k) => (k.textContent = '⌘K'))
 btnNicos?.addEventListener('click', () => abrirNicos('terminal'))
 btnNicos?.addEventListener('pointerenter', () => void cargarNicos().catch(() => {}), { once: true })
 const encender = document.getElementById('nicos-encender')
@@ -105,10 +108,19 @@ if (reduce || !hayIO) {
   rv.forEach((el) => io.observe(el))
 }
 
-// Pieza activa y enlace actual
+// Pieza activa y enlace actual (cabecera de escritorio y tira de secciones en móvil)
 const stage = document.getElementById('stage')
-const links = new Map<string, HTMLAnchorElement>()
-document.querySelectorAll<HTMLAnchorElement>('header nav a').forEach((a) => links.set(a.getAttribute('href')!.slice(1), a))
+const links = new Map<string, HTMLAnchorElement[]>()
+document.querySelectorAll<HTMLAnchorElement>('header nav a').forEach((a) => {
+  const id = a.getAttribute('href')!.slice(1)
+  links.set(id, [...(links.get(id) ?? []), a])
+})
+const tira = document.querySelector<HTMLElement>('.subnav-in')
+function centrarEnlace(a: HTMLElement) {
+  if (!tira || tira.scrollWidth <= tira.clientWidth) return
+  const izq = a.offsetLeft - (tira.clientWidth - a.offsetWidth) / 2
+  tira.scrollTo({ left: izq, behavior: reduce ? 'auto' : 'smooth' })
+}
 if (hayIO) {
   const so = new IntersectionObserver(
     (entries) => {
@@ -116,12 +128,58 @@ if (hayIO) {
         if (!en.isIntersecting) continue
         const s = en.target as HTMLElement
         if (stage && s.dataset.pieza) stage.dataset.active = s.dataset.pieza
-        links.forEach((a, id) => (id === s.id ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')))
+        links.forEach((as, id) =>
+          as.forEach((a) => {
+            if (id === s.id) {
+              a.setAttribute('aria-current', 'true')
+              if (a.closest('.subnav-in')) centrarEnlace(a)
+            } else a.removeAttribute('aria-current')
+          }),
+        )
       }
     },
     { rootMargin: '-45% 0px -50% 0px' },
   )
   document.querySelectorAll('main section[data-pieza]').forEach((s) => so.observe(s))
+}
+
+// El botón de CV de la cabecera se rellena (y en móvil aparece el circular) cuando el del héroe sale de la vista;
+// el circular se esconde mientras se ve contacto o el pie.
+const ctaCv = document.querySelector('.cta-cv')
+if (ctaCv && hayIO) {
+  new IntersectionObserver(
+    ([en]) => root.classList.toggle('cta-out', !en.isIntersecting && en.boundingClientRect.top < 0),
+    { rootMargin: '-' + (parseInt(getComputedStyle(root).getPropertyValue('--header-h')) || 56) + 'px 0px 0px 0px' },
+  ).observe(ctaCv)
+  const fin = new Set<Element>()
+  const fo = new IntersectionObserver(
+    (entries) => {
+      for (const en of entries) (en.isIntersecting ? fin.add(en.target) : fin.delete(en.target))
+      root.classList.toggle('fab-off', fin.size > 0)
+    },
+    { rootMargin: '0px 0px -15% 0px' },
+  )
+  document.querySelectorAll('#contacto, .foot').forEach((el) => fo.observe(el))
+}
+
+// Progreso de lectura: barra de 2 px en el borde inferior de la cabecera (rAF, listener pasivo)
+const barra = document.getElementById('progreso')
+if (barra) {
+  let pendiente = false
+  const pintar = () => {
+    pendiente = false
+    const max = document.documentElement.scrollHeight - window.innerHeight
+    barra.style.setProperty('--p', max > 0 ? String(Math.min(1, Math.max(0, window.scrollY / max))) : '0')
+  }
+  const pedir = () => {
+    if (!pendiente) {
+      pendiente = true
+      requestAnimationFrame(pintar)
+    }
+  }
+  window.addEventListener('scroll', pedir, { passive: true })
+  window.addEventListener('resize', pedir, { passive: true })
+  pintar()
 }
 
 // Portátil 3D: solo con escenario visible (>= 860px) y WebGL; después del primer pintado.
