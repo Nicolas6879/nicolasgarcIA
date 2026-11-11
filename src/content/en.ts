@@ -24,7 +24,7 @@ export const en: Contenido = {
     cvPropio: 'cv/Juan-Nicolas-Garcia-CV-EN.pdf',
     cvOtro: { texto: 'Versión en español (PDF)', archivo: 'cv/Juan-Nicolas-Garcia-CV-ES.pdf' },
     temaAria: 'Switch between light and dark theme',
-    idioma: { texto: 'ES', aria: 'Ver en español', lang: 'es', ruta: 'es/' },
+    idioma: { texto: 'ES', aria: 'ES – Ver en español', lang: 'es', ruta: 'es/' },
     capturaDe: 'Screenshot of',
     capturaProx: 'Screenshot coming soon',
     verCodigo: 'View code',

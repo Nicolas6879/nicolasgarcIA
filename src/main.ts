@@ -146,9 +146,26 @@ function cargar3D() {
   if ('requestIdleCallback' in window) requestIdleCallback(() => void lanzar(), { timeout: 2000 })
   else setTimeout(() => void lanzar(), 200)
 }
-if (document.readyState === 'complete') cargar3D()
-else window.addEventListener('load', cargar3D, { once: true })
-anchoMin.addEventListener('change', () => document.readyState === 'complete' && cargar3D())
+// La escena (compilar shaders, textura, WebGL) es trabajo pesado que no hace falta para leer: arranca con la primera
+// interacción (mover, tocar, teclear, desplazarse) o, si la persona solo mira, a los 8 s de cargar. Mientras, el SVG.
+let armado = false
+function armar3D() {
+  if (armado || tresD || !stage || !anchoMin.matches) return
+  armado = true
+  const ev = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll', 'touchstart'] as const
+  let t = 0
+  const lanzar = () => {
+    ev.forEach((e) => window.removeEventListener(e, lanzar))
+    clearTimeout(t)
+    armado = false
+    cargar3D()
+  }
+  ev.forEach((e) => window.addEventListener(e, lanzar, { passive: true, once: true }))
+  t = window.setTimeout(lanzar, 8000)
+}
+if (document.readyState === 'complete') armar3D()
+else window.addEventListener('load', armar3D, { once: true })
+anchoMin.addEventListener('change', () => document.readyState === 'complete' && armar3D())
 
 // Efecto captura -> código: el módulo (canvas 2D, sin dependencias) se descarga cuando la primera tarjeta se acerca
 const tarjetas = Array.from(document.querySelectorAll<HTMLElement>('.card[data-fx]'))

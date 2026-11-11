@@ -4,6 +4,9 @@
   --sec: #d7dce4;
   --acc: #ff7a45;
   --acc-grad: linear-gradient(90deg, #ff7a45, #ff3d7f);
+  /* Fondo de botones: el mismo degradado en ambos temas, así el texto oscuro mantiene >= 4.5:1 también en claro. */
+  --btn-grad: linear-gradient(90deg, #ff7a45, #ff3d7f);
+  --acc-txt: var(--acc); /* acento para texto pequeño (en claro, una versión más oscura) */
   --on-acc: #161b26;
 
   --surface: color-mix(in srgb, var(--sec) 6%, var(--base));
@@ -35,6 +38,7 @@
     --sec: #161b26;
     --acc: #e8551f;
     --acc-grad: linear-gradient(#e8551f, #e8551f);
+    --acc-txt: #b53f10;
     color-scheme: light;
   }
 }
@@ -43,6 +47,7 @@
   --sec: #161b26;
   --acc: #e8551f;
   --acc-grad: linear-gradient(#e8551f, #e8551f);
+  --acc-txt: #b53f10;
   color-scheme: light;
 }
 :root[data-theme='dark'] {
@@ -108,7 +113,7 @@ a { color: inherit; }
 /* Botones */
 .btn {
   display: inline-flex; align-items: center; gap: 8px;
-  background: var(--acc-grad); color: var(--on-acc);
+  background: var(--btn-grad); color: var(--on-acc);
   font: 650 var(--t-sm) var(--f-text); text-decoration: none;
   padding: 12px 22px; border-radius: 999px; border: 2px solid transparent; cursor: pointer;
   transition: transform 0.15s ease, filter 0.15s ease;
@@ -197,7 +202,7 @@ main section + section { border-top: 1px solid var(--border); }
   color: var(--sec); background: color-mix(in srgb, var(--base) 82%, transparent);
   border: 1px solid var(--border); backdrop-filter: blur(6px);
 }
-.fx-btn:hover { border-color: var(--acc); color: var(--acc); }
+.fx-btn:hover { border-color: var(--acc); color: var(--acc-txt); }
 @media (max-width: 480px) { .fx-btn { right: 6px; bottom: 6px; padding: 5px 9px; font-size: 0.7rem; } }
 .card-body h3 { margin-top: 0; }
 .res { color: var(--sec); }
@@ -301,7 +306,8 @@ html.lenis, html.lenis body { height: auto; }
   .stage { display: none; }
   .top nav, .cv-top { display: none; }
   .top-actions { margin-left: auto; }
-  .cv-fab { display: flex; position: fixed; right: 16px; bottom: 16px; z-index: 60; box-shadow: 0 6px 20px rgb(0 0 0 / 0.3); }
+  .cv-fab { display: flex; position: fixed; right: 16px; bottom: 16px; z-index: 60; }
+  .cv-fab .btn { box-shadow: 0 6px 20px rgb(0 0 0 / 0.3); }
   .cifras { gap: 10px; }
   .big { font-size: clamp(1.6rem, 7vw, 2.2rem); }
 }
@@ -355,4 +361,45 @@ html.lenis, html.lenis body { height: auto; }
   .top nav { gap: 0; }
   .top nav a { padding: 6px 7px; }
   .top-actions { gap: 6px; }
+}
+
+/* ---------- Móvil, accesibilidad y rendimiento (paso 9) ---------- */
+/* Visual móvil: render estático del portátil armado (sustituye al 3D por debajo de 860 px) */
+.hero-vis { display: none; }
+@media (max-width: 859px) {
+  .hero-vis { display: block; width: min(100%, 420px); margin: 12px auto 0; opacity: 0.92; }
+  .hero-vis picture { display: block; }
+  .hero-vis img { width: 100%; height: auto; aspect-ratio: 780 / 770; }
+  .hero-vis .vis-claro { display: none; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme='dark']) .hero-vis .vis-oscuro { display: none; }
+    :root:not([data-theme='dark']) .hero-vis .vis-claro { display: block; }
+  }
+  :root[data-theme='light'] .hero-vis .vis-oscuro { display: none; }
+  :root[data-theme='light'] .hero-vis .vis-claro { display: block; }
+  :root[data-theme='dark'] .hero-vis .vis-oscuro { display: block; }
+  :root[data-theme='dark'] .hero-vis .vis-claro { display: none; }
+}
+
+/* Cabecera compacta y objetivos táctiles de 44 px en móvil */
+@media (max-width: 859px) {
+  .top { gap: 10px; }
+  .brand { min-width: 0; overflow: hidden; text-overflow: ellipsis; display: block; line-height: 44px; }
+  .top-actions { gap: 8px; flex-shrink: 0; }
+  .icon-btn, .lang-switch, .js .nicos-btn { width: 44px; min-width: 44px; height: 44px; }
+  .btn-sm { min-height: 44px; }
+  .btn { min-height: 44px; }
+  .tech { min-height: 44px; }
+  .cv-alt { display: inline-block; padding-block: 10px; }
+  .cv-fab .cv-alt { display: none; } /* ya está en el héroe y en nicOS: el botón flotante tapa menos */
+}
+@media (max-width: 380px) {
+  .top { padding-inline: 12px; gap: 6px; }
+  .top-actions { gap: 4px; }
+}
+
+/* Captura -> código: en pantallas estrechas el área es más alta (4:5) para que el código se lea a >= 11 px */
+@media (max-width: 500px) {
+  .card .media img, .card .ph { aspect-ratio: 4 / 5; }
+  .fx-btn { min-height: 36px; padding-inline: 12px; }
 }

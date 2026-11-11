@@ -62,6 +62,13 @@ function cabecera(c: Contenido, raiz: string): string {
 <div class="cv-fab"><a class="btn" href="${cv}" download>${ICONO_DESCARGA}<span>${e(u.descargarCv)}</span></a>${cvOtro(c, raiz)}</div>`
 }
 
+/** Render estático del portátil armado para móvil (sin 3D): una imagen por tema; CSS muestra la que toca. Decorativa. */
+function visualMovil(raiz: string): string {
+  const img = (tema: 'oscuro' | 'claro') =>
+    `<picture class="vis-${tema}"><source type="image/avif" srcset="${raiz}img/portatil-${tema}.avif" /><img src="${raiz}img/portatil-${tema}.webp" width="780" height="770" alt="" loading="lazy" decoding="async" fetchpriority="low" /></picture>`
+  return `<div class="hero-vis" aria-hidden="true">${img('oscuro')}${img('claro')}</div>`
+}
+
 function inicio(cc: Contenido, raiz: string): string {
   const c = cc.inicio
   const partes = c.nombre.split(' ')
@@ -78,6 +85,7 @@ function inicio(cc: Contenido, raiz: string): string {
   <ul class="cifras rv">${cifras}</ul>
   <p class="botones rv"><a class="btn" href="${raiz}${cc.ui.cvPropio}" download>${e(c.botones.cv)}</a><a class="btn btn-ghost" href="#contacto">${e(c.botones.contacto)}</a>${cvOtro(cc, raiz)}</p>
   <p class="pista rv">${e(c.pista)}</p>
+  ${visualMovil(raiz)}
 </section>`
 }
 
@@ -96,7 +104,7 @@ function sistemas(c: Contenido['sistemas'], u: Contenido['ui'], o: Opciones): st
       // Sin JS: captura y, debajo, el fragmento. Con JS: un <canvas> encima de .media deshace la captura en
       // partículas que forman el código; el <pre> sigue en el HTML (oculto a la vista, accesible).
       return `<li class="card rv" data-fx>
-  <div class="media">${media}<button type="button" class="fx-btn" hidden data-codigo="${e(u.verCodigo)}" data-captura="${e(u.verCaptura)}">${e(u.verCodigo)}</button></div>
+  <div class="media">${media}<button type="button" class="fx-btn" hidden aria-pressed="false" data-codigo="${e(u.verCodigo)}" data-captura="${e(u.verCaptura)}">${e(u.verCodigo)}</button></div>
   <div class="codigo" data-archivo="${e(it.codigo)}"><pre tabindex="0"><code class="language-${e(lang)}">${e(fuente)}</code></pre><p class="cod-cap">${e(u.fragmento)}</p></div>
   <div class="card-body"><h3>${e(it.nombre)}</h3><p class="res"><strong>${e(it.resultado)}</strong></p><p>${e(it.detalle)}</p><ul class="chips" aria-label="${e(u.tecnologiasAria)}">${chips}</ul></div></li>`
     })

@@ -31,10 +31,14 @@ function paginaEstatica(): Plugin[] {
         // Los hreflang se añaden al final: Vite trataría como assets los href con rutas de carpeta.
         order: 'post',
         handler(_html, ctx) {
+          // hreflang exige URLs absolutas: sin dominio todavía no se emiten (un href relativo es inválido).
+          // Al publicar: SITE_URL=https://dominio.tld npm run build
+          const sitio = process.env.SITE_URL?.replace(/\/+$/, '')
+          if (!sitio) return []
           const alt = hreflangs(esPaginaEs(ctx.filename) ? es : en, es, en)
           return alt.map((a) => ({
             tag: 'link',
-            attrs: { rel: 'alternate', hreflang: a.hreflang, href: a.href },
+            attrs: { rel: 'alternate', hreflang: a.hreflang, href: new URL(a.href, `${sitio}${esPaginaEs(ctx.filename) ? '/es/' : '/'}`).href },
             injectTo: 'head' as const,
           }))
         },

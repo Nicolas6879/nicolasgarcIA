@@ -12,6 +12,7 @@ const DUR_VUELO = 0.4 // fracción de p que dura el viaje de cada partícula
 const FRENTE = 0.46 // fracción de p que tarda el barrido izquierda -> derecha
 const RUIDO_T = 0.06
 const MAX_DPR = 1.5
+const PX_MIN = 11 // tamaño mínimo (px CSS) del código en pantallas estrechas
 const FUENTE = "'JetBrains Mono Variable', ui-monospace, monospace"
 const TITULO = "'Bricolage Grotesque Variable', system-ui, sans-serif"
 const PALABRAS = new Set(
@@ -251,6 +252,25 @@ function trocear(linea: string): Trozo[] {
   return out
 }
 
+/** Parte una línea de código en trozos de `max` columnas, cortando en espacios y conservando la sangría (+2 en las continuaciones). */
+function partirLinea(l: string, max: number): string[] {
+  if (l.length <= max) return [l]
+  const sangria = (l.match(/^\s*/) ?? [''])[0]
+  const out: string[] = []
+  let resto = l
+  let pref = ''
+  while (resto.length + pref.length > max) {
+    const tope = max - pref.length
+    let corte = resto.lastIndexOf(' ', tope)
+    if (corte <= sangria.length + 1 - pref.length) corte = tope
+    out.push(pref + resto.slice(0, corte).replace(/\s+$/, ''))
+    resto = resto.slice(corte).replace(/^\s+/, '')
+    pref = sangria + '  '
+  }
+  out.push(pref + resto)
+  return out
+}
+
 function dibujarCodigo(ctx: CanvasRenderingContext2D, c: Carta, col: Colores) {
   const { W, H } = c
   ctx.fillStyle = col.fondo
@@ -267,17 +287,36 @@ function dibujarCodigo(ctx: CanvasRenderingContext2D, c: Carta, col: Colores) {
     ctx.fill()
   }
   ctx.globalAlpha = 1
-  const lineas = c.codigo.replace(/\s+$/, '').split('\n')
-  const cols = Math.max(...lineas.map((l) => l.length), 20)
+  const orig = c.codigo.replace(/\s+$/, '').split('\n')
+  const cols = Math.max(...orig.map((l) => l.length), 20)
   const pad = Math.max(10, W * 0.035)
-  const px = Math.min(15, (W - 2 * pad) / (cols * 0.6), (H - barra - pie - pad) / (lineas.length * 1.5))
+  const libre = H - barra - pie - pad
+  // Tamaño que cabe sin partir líneas. En pantallas estrechas saldría ilegible (< PX_MIN): entonces se fija un
+  // tamaño legible y las líneas largas se parten (con sangría) para llenar el ancho.
+  let px = Math.min(15, (W - 2 * pad) / (cols * 0.6), libre / (orig.length * 1.5))
+  let lineas = orig
+  let inter = 1.5
+  if (px < PX_MIN) {
+    px = PX_MIN + 0.5
+    const partir = () => {
+      const maxCols = Math.max(16, Math.floor((W - 2 * pad) / (px * 0.6)))
+      return orig.flatMap((l) => partirLinea(l, maxCols))
+    }
+    lineas = partir()
+    // Si no caben, se aprieta el interlineado y, como último recurso, el tamaño (nunca por debajo de PX_MIN).
+    if (lineas.length * px * inter > libre) inter = 1.38
+    if (lineas.length * px * inter > libre) {
+      px = PX_MIN
+      lineas = partir()
+    }
+  }
+  const lh = px * inter
   ctx.textBaseline = 'alphabetic'
   ctx.font = `500 ${Math.max(7, barra * 0.45)}px ${FUENTE}`
   ctx.fillStyle = col.muted
   ctx.fillText(c.archivo, barra * 2.4, barra * 0.66)
   ctx.font = `400 ${px}px ${FUENTE}`
   const cw = ctx.measureText('M').width
-  const lh = px * 1.5
   const y0 = barra + pad * 0.6 + px
   lineas.forEach((l, i) => {
     let x = pad
@@ -574,6 +613,7 @@ function actualizarEtiqueta(c: Carta) {
   if (aCodigo === c.etiqueta && c.btn.dataset.ok) return
   c.etiqueta = aCodigo
   c.btn.dataset.ok = '1'
+  c.btn.setAttribute('aria-pressed', aCodigo ? 'true' : 'false')
   c.btn.textContent = (aCodigo ? c.btn.dataset.captura : c.btn.dataset.codigo) ?? ''
 }
 

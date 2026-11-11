@@ -213,13 +213,39 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
       return t.tex
     }
     const aplicarTextura = (cv: HTMLCanvasElement) => {
-      const tex = texDe(cv)
+      const tex = texDe(temaClaro() && cv !== yaOscuro ? aOscuro(cv) : cv)
       tex.needsUpdate = true
       if (matPantalla.map !== tex) {
         matPantalla.map = tex
         matPantalla.emissiveMap = tex
         matPantalla.needsUpdate = true
       }
+    }
+    const tonoPantalla = () => {
+      matPantalla.color.set(0xffffff)
+      matPantalla.emissive.set(0xffffff)
+      matPantalla.emissiveIntensity = 0.6
+    }
+    // En tema claro los canvas son casi blancos y la pantalla parecería un folio: para la textura 3D se usa una copia
+    // en oscuro (invertida y con el matiz girado 180°, así el acento sigue siendo naranja). La pantalla siempre "enciende" oscura.
+    const temaClaro = () => getComputedStyle(document.documentElement).colorScheme.includes('light')
+    const oscuros = new Map<HTMLCanvasElement, HTMLCanvasElement>()
+    let yaOscuro: HTMLCanvasElement | null = null // la pantalla de nicOS ya se dibuja siempre en oscuro
+    const aOscuro = (cv: HTMLCanvasElement): HTMLCanvasElement => {
+      let o = oscuros.get(cv)
+      if (!o) {
+        o = document.createElement('canvas')
+        oscuros.set(cv, o)
+      }
+      if (o.width !== cv.width || o.height !== cv.height) {
+        o.width = cv.width
+        o.height = cv.height
+      }
+      const c = o.getContext('2d')!
+      c.filter = 'invert(1) hue-rotate(180deg)'
+      c.drawImage(cv, 0, 0)
+      c.filter = 'none'
+      return o
     }
     const ponerPantalla = (cv: HTMLCanvasElement | null) => {
       if (cv === lienzoActual) return
@@ -232,13 +258,18 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
         matPantalla.emissiveMap = orig.emissiveMap
         matPantalla.needsUpdate = true
       } else {
-        matPantalla.color.set(0xffffff)
-        matPantalla.emissive.set(0xffffff)
-        matPantalla.emissiveIntensity = 0.6
+        tonoPantalla()
         aplicarTextura(cv)
       }
       pedir()
     }
+    const alCambiarTema = () => {
+      if (!lienzoActual) return
+      aplicarTextura(lienzoActual)
+      pedir()
+    }
+    new MutationObserver(alCambiarTema).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', alCambiarTema)
     // La textura solo se sube a la GPU cuando ese canvas se redibuja.
     alRedibujar((cv) => {
       if (cv !== lienzoActual) return
@@ -248,6 +279,7 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     // Contacto: arranque de nicOS dibujado en un canvas 2D (se redibuja solo mientras la sección está activa).
     const datos = leerDatos()
     const pn = datos ? crearPantallaNicos(datos, reduce) : null
+    yaOscuro = pn?.canvas ?? null
     const piezaContacto = document.getElementById('contacto')?.dataset.pieza
     let enContacto = false
     gsap.ticker.add((t) => {
