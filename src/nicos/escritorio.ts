@@ -43,6 +43,23 @@ let abortarBoot: (() => void) | null = null
 
 const sinMovimiento = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const esEscritorio = () => window.matchMedia(ANCHO_VENTANA).matches
+const tactil = () => window.matchMedia('(pointer: coarse)').matches
+// Historial: en móvil nicOS (y cada app) empuja una entrada, así el gesto/botón "atrás" cierra en vez de salir del sitio.
+let pila = 0
+const empujar = () => {
+  try {
+    history.pushState({ nicos: 1 }, '')
+    pila++
+  } catch {
+    /* sin History API */
+  }
+}
+const retroceder = () => {
+  const n = pila
+  pila = 0
+  if (n) history.go(-n)
+}
+const hayApp = () => [...ventanas.values()].some((x) => !x.el.hidden && !x.el.dataset.cerrando)
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, clase = '', html = ''): HTMLElementTagNameMap[K] {
   const x = document.createElement(tag)
@@ -131,12 +148,15 @@ function crearVentana(id: VentanaId): Ventana {
   nodo.id = `nx-w-${id}`
   nodo.setAttribute('role', 'region')
   nodo.setAttribute('aria-labelledby', `nx-t-${id}`)
-  nodo.innerHTML = `<header class="nx-tb"><span class="nx-tt" id="nx-t-${id}">${esc(nombre)}</span><button type="button" class="nx-wx" aria-label="${esc(d!.t.cerrar)}: ${esc(nombre)}"><svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button></header><div class="nx-body" data-lenis-prevent></div>`
+  nodo.innerHTML = `<header class="nx-tb"><button type="button" class="nx-wb" aria-label="${esc(d!.t.volver)}"><svg viewBox="0 0 12 12" width="14" height="14" aria-hidden="true"><path d="M8 1L3 6l5 5" stroke="currentColor" stroke-width="2" fill="none"/></svg></button><span class="nx-tt" id="nx-t-${id}">${esc(nombre)}</span><button type="button" class="nx-wx" aria-label="${esc(d!.t.cerrar)}: ${esc(nombre)}"><svg viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button><button type="button" class="nx-wc" aria-label="${esc(d!.t.cerrar)} nicOS"><svg viewBox="0 0 10 10" width="12" height="12" aria-hidden="true"><path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" stroke-width="1.8" fill="none"/></svg></button></header><div class="nx-body" data-lenis-prevent></div>`
   const w: Ventana = { id, el: nodo }
   contenido(id, d!, w, nodo.querySelector('.nx-body')!)
   nodo.querySelector('.nx-wx')!.addEventListener('click', () => cerrarVentana(id))
+  nodo.querySelector('.nx-wb')!.addEventListener('click', () => volver())
+  nodo.querySelector('.nx-wc')!.addEventListener('click', () => cerrar())
   nodo.addEventListener('pointerdown', () => enfocarVentana(id), true)
   arrastrable(nodo, nodo.querySelector('.nx-tb')!)
+  deslizar(nodo, nodo.querySelector('.nx-tb')!)
   capaVentanas.append(nodo)
   ventanas.set(id, w)
   return w
@@ -170,6 +190,40 @@ function arrastrable(win: HTMLElement, barra: HTMLElement) {
   })
 }
 
+/** Móvil: arrastrar la barra de la app hacia abajo la cierra (vuelve al escritorio). */
+function deslizar(win: HTMLElement, barra: HTMLElement) {
+  let y0 = 0
+  let dy = 0
+  let id = -1
+  barra.addEventListener('pointerdown', (ev) => {
+    if (esEscritorio() || (ev.target as HTMLElement).closest('button')) return
+    y0 = ev.clientY
+    dy = 0
+    id = ev.pointerId
+    barra.setPointerCapture(id)
+  })
+  barra.addEventListener('pointermove', (ev) => {
+    if (ev.pointerId !== id) return
+    dy = Math.max(0, ev.clientY - y0)
+    win.style.transform = `translateY(${dy}px)`
+  })
+  const fin = (ev: PointerEvent) => {
+    if (ev.pointerId !== id) return
+    id = -1
+    win.style.transform = ''
+    if (dy > 90) volver()
+  }
+  barra.addEventListener('pointerup', fin)
+  barra.addEventListener('pointercancel', fin)
+}
+
+/** Atrás: en móvil de la app al escritorio (por el historial si hay entrada empujada). */
+function volver() {
+  if (!activa) return
+  if (pila >= 2) history.back()
+  else cerrarVentana(activa)
+}
+
 function enfocarVentana(id: VentanaId) {
   const w = ventanas.get(id)
   if (!w) return
@@ -184,6 +238,7 @@ function abrirVentana(id: VentanaId) {
   delete w.el.dataset.cerrando
   if (!esEscritorio()) ventanas.forEach((x) => x.id !== id && cerrarVentana(x.id)) // móvil: una a la vez
   if (!yaAbierta) {
+    if (!esEscritorio() && pila < 2) empujar()
     w.el.hidden = false
     if (esEscritorio() && !w.el.style.left) {
       // Cascada: cada ventana nueva se escalona respecto a las abiertas y se mantiene dentro del viewport.
@@ -202,8 +257,10 @@ function abrirVentana(id: VentanaId) {
     }
   }
   enfocarVentana(id)
-  // Foco inmediato en la terminal (si espera un frame, las primeras teclas se pierden).
-  if (id === 'terminal') w.terminal?.enfocar()
+  raiz!.classList.toggle('nx-app', !esEscritorio())
+  // Foco inmediato en la terminal (si espera un frame, las primeras teclas se pierden). En táctil no: abriría
+  // el teclado y taparía las fichas de comandos; se enfoca al tocar la línea de entrada.
+  if (id === 'terminal') tactil() ? w.el.querySelector<HTMLElement>('.nx-wb')?.focus({ preventScroll: true }) : w.terminal?.enfocar()
   else requestAnimationFrame(() => w.el.querySelector<HTMLElement>('.nx-wx')?.focus({ preventScroll: true }))
 }
 
@@ -222,6 +279,7 @@ function cerrarVentana(id: VentanaId) {
     w.el.classList.add('nx-sale')
     setTimeout(fin, 160)
   }
+  raiz?.classList.remove('nx-app')
   if (activa === id) {
     activa = null
     // El foco vuelve al icono del escritorio para no perderse.
@@ -255,6 +313,26 @@ function construir() {
   })
   raiz.addEventListener('keydown', alTeclado)
   document.addEventListener('keydown', (ev) => abierto && ev.key === 'Escape' && cerrar())
+  window.addEventListener('popstate', () => {
+    if (!abierto || !pila) return
+    pila--
+    if (hayApp() && pila) cerrarVentana(activa ?? ORDEN.find((k) => ventanas.get(k) && !ventanas.get(k)!.el.hidden)!)
+    else {
+      pila = 0
+      cerrar(true, false)
+    }
+  })
+  // Teclado virtual: el overlay mide lo que se ve (visualViewport) para que ni la barra ni la entrada queden tapadas.
+  const vv = window.visualViewport
+  const ajustar = () => {
+    if (!vv || !raiz) return
+    raiz.style.height = vv.height + 'px'
+    raiz.style.bottom = 'auto'
+    raiz.style.top = vv.offsetTop + 'px'
+  }
+  vv?.addEventListener('resize', ajustar)
+  vv?.addEventListener('scroll', ajustar)
+  ajustar()
   document.body.append(raiz)
 }
 
@@ -291,7 +369,7 @@ function arrancar(alTerminar: () => void) {
   boot.innerHTML = `<div class="nx-boot-in"><p class="nx-boot-logo">nic<span class="acc">OS</span></p><p class="nx-boot-v">v1.0</p>
     <div class="nx-prog" role="progressbar" aria-label="nicOS" aria-valuemin="0" aria-valuemax="100"><i></i></div>
     <ul class="nx-boot-log" aria-hidden="true">${lineas.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>
-    <p class="nx-boot-skip">${esc(d!.t.arranque.saltar)}</p></div>`
+    <p class="nx-boot-skip"><span class="nx-k">${esc(d!.t.arranque.saltar)}</span><span class="nx-t">${esc(d!.t.arranque.saltarToque)}</span></p></div>`
   raiz!.append(boot)
   const items = [...boot.querySelectorAll<HTMLElement>('.nx-boot-log li')]
   const barra = boot.querySelector<HTMLElement>('.nx-prog i')!
@@ -347,6 +425,7 @@ export function abrir(v: VentanaId = 'leeme'): void {
     bloqueados = [...document.body.children].filter((x): x is HTMLElement => x !== raiz && x instanceof HTMLElement && !x.inert && x.tagName !== 'SCRIPT')
     bloqueados.forEach((x) => (x.inert = true))
     document.documentElement.classList.add('nicos-abierto')
+    if (!esEscritorio()) empujar()
     raiz!.hidden = false
     if (!sinMovimiento()) {
       raiz!.classList.remove('nx-sale')
@@ -368,9 +447,12 @@ export function abrir(v: VentanaId = 'leeme'): void {
   abrirVentana(v)
 }
 
-export function cerrar(restaurarFoco = true): void {
+export function cerrar(restaurarFoco = true, atras = true): void {
   if (!abierto || !raiz) return
   abierto = false
+  if (atras && restaurarFoco) retroceder()
+  else pila = 0
+  raiz.classList.remove('nx-app')
   abortarBoot?.()
   clearInterval(relojId)
   const fin = () => {

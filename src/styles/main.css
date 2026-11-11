@@ -464,6 +464,10 @@ html.lenis, html.lenis body { height: auto; }
 /* Visual móvil: render estático del portátil armado (sustituye al 3D por debajo de 860 px) */
 .hero-vis { display: none; }
 
+/* Móvil con 3D: bloques de cristal y huecos. En escritorio los envoltorios no existen para el layout y el hueco no se pinta. */
+.cris { display: contents; }
+.ventana { display: none; }
+
 /* Logo: nicolasgarcIA, el "IA" lleva el acento (mismo tratamiento en ambos temas) */
 .brand-ia { background: var(--acc-grad); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
 
@@ -508,9 +512,9 @@ html.lenis, html.lenis body { height: auto; }
 
   /* Hero: más aire bajo la cabecera */
   .hero { padding-top: calc(var(--header-h) + 28px); }
-  .hero-vis { display: block; width: min(100%, 420px); margin: 24px auto 0; opacity: 0.92; }
-  .hero-vis picture { display: block; }
-  .hero-vis img { width: 100%; height: auto; aspect-ratio: 780 / 770; }
+  .hero-vis { display: block; height: 100%; margin: 0 auto; opacity: 0.92; aspect-ratio: 780 / 770; max-width: 100%; transition: opacity 0.5s ease; }
+  .hero-vis picture { display: block; height: 100%; }
+  .hero-vis img { width: auto; height: 100%; max-width: 100%; margin: 0 auto; aspect-ratio: 780 / 770; object-fit: contain; }
   .hero-vis .vis-claro { display: none; }
   @media (prefers-color-scheme: light) {
     :root:not([data-theme='dark']) .hero-vis .vis-oscuro { display: none; }
@@ -540,6 +544,62 @@ html.lenis, html.lenis body { height: auto; }
   }
   .cv-fab:active { transform: scale(0.94); }
 }
+/* ---------- Móvil: el portátil 3D es el fondo (canvas fijo) ----------
+   Cada bloque de contenido es un cristal esmerilado a sangre; en cada sección hay un hueco transparente (.ventana)
+   justo después del título, con bordes que se difuminan, por donde se ve el portátil nítido. Sin 3D los huecos miden 0
+   (salvo el del hero, que muestra la imagen estática) y el cristal no se pinta. */
+@media (max-width: 859px) {
+  :root {
+    --ventana-h: clamp(280px, 48svh, 520px);
+    --pluma: 56px;
+    --cristal: color-mix(in srgb, var(--base) 80%, transparent);
+    --cristal-fb: color-mix(in srgb, var(--base) 96%, transparent);
+  }
+  main section { padding-block: 0; }
+  .cris { display: flow-root; margin-inline: calc(var(--gutter) * -1); padding-inline: var(--gutter); }
+  .cris-t { padding-top: var(--sec-pad); }
+  .cris-b { padding-bottom: var(--sec-pad); }
+  .hero { justify-content: flex-start; padding: 0; }
+  .hero .cris-t { display: flex; flex-direction: column; padding-top: calc(var(--header-h) + 28px); }
+  .hero .cris-b { flex: 1 1 auto; padding-bottom: 32px; padding-top: 0; }
+  .ventana { display: block; position: relative; height: 0; margin-inline: calc(var(--gutter) * -1); touch-action: pan-y; }
+  .ventana.abierta, .ventana-hero { height: var(--ventana-h); }
+  #trayectoria .ventana { --ventana-h: clamp(340px, 62svh, 600px); } /* ocho etiquetas: más sitio */
+  .ventana-hero { padding-block: 12px; }
+  .ventana-hero .hero-vis { height: 100%; }
+  html.v3d .ventana-hero { pointer-events: auto; }
+  html.v3d .ventana-hero .hero-vis { opacity: 0; }
+  .foot { margin-top: 0; }
+  /* El hero muestra el portátil en la ventana; mientras no haya 3D, la imagen estática */
+  html.v3d { overflow-anchor: none; }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    html.v3d .cris, html.v3d .foot {
+      background: var(--cristal);
+      -webkit-backdrop-filter: blur(16px) saturate(1.1);
+      backdrop-filter: blur(16px) saturate(1.1);
+    }
+    /* Bordes del hueco: capas apiladas que se acortan hacia dentro; el desenfoque se acumula (≈16 px fuera, 0 dentro) y el
+       tinte baja en degradado. (Una máscara sobre backdrop-filter anula el desenfoque en Chromium: no se usa.) */
+    html.v3d .pluma i { -webkit-backdrop-filter: blur(var(--bl)) saturate(1.1); backdrop-filter: blur(var(--bl)) saturate(1.1); }
+  }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    html.v3d .cris, html.v3d .foot { background: var(--cristal-fb); }
+  }
+  .pluma { display: none; position: absolute; left: 0; right: 0; height: var(--pluma); pointer-events: none; }
+  html.v3d .ventana.abierta .pluma, html.v3d .ventana-hero .pluma { display: block; }
+  .pluma-s { top: 0; background: linear-gradient(to bottom, var(--cristal), color-mix(in srgb, var(--base) 42%, transparent) 38%, color-mix(in srgb, var(--base) 10%, transparent) 76%, transparent); }
+  .pluma-i { bottom: 0; background: linear-gradient(to top, var(--cristal), color-mix(in srgb, var(--base) 42%, transparent) 38%, color-mix(in srgb, var(--base) 10%, transparent) 76%, transparent); }
+  .pluma i { position: absolute; left: 0; right: 0; }
+  .pluma-s i { top: 0; }
+  .pluma-i i { bottom: 0; }
+  .pluma i:nth-child(1) { height: 100%; --bl: 3px; }
+  .pluma i:nth-child(2) { height: 79%; --bl: 4.5px; }
+  .pluma i:nth-child(3) { height: 58%; --bl: 6.5px; }
+  .pluma i:nth-child(4) { height: 38%; --bl: 8.5px; }
+  .pluma i:nth-child(5) { height: 19%; --bl: 11.5px; }
+  canvas.escena { height: 100vh; height: 100lvh; bottom: auto; }
+}
 @media (max-width: 480px) {
   .lead { font-size: var(--t-md); }
   .cap { font-size: var(--t-xs); }
@@ -564,4 +624,47 @@ html.lenis, html.lenis body { height: auto; }
 /* Foco dentro de contenedores que recortan (logo y tira de secciones en móvil) */
 @media (max-width: 859px) {
   .brand:focus-visible, .subnav a:focus-visible { outline-offset: -3px; border-radius: 8px; }
+}
+
+/* ---------- En 30 segundos (bajo el héroe) ---------- */
+.resumen { margin: 28px 0 0; max-width: 640px; padding: 14px 18px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--card-fx); }
+.r-tit { margin: 0 0 10px; color: var(--sec); }
+.r-lista { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 14px 20px; }
+.r-fila { display: flex; flex-direction: column; gap: 3px; }
+.r-fila dt, .r-fila dd { margin: 0; }
+.r-fila dd { font-size: var(--t-sm); line-height: 1.35; color: var(--sec); text-wrap: pretty; }
+.r-fila .sep { margin: 0 0.15em; }
+@media (max-width: 859px) {
+  .resumen { max-width: none; }
+  .r-lista { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Tecnologías agrupadas */
+.tgrupo + .tgrupo { margin-top: 28px; }
+.tg-n { margin: 0 0 10px; color: var(--sec); }
+
+/* Enlace de verificación en texto (premios, charlas) */
+.enl { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; font-size: var(--t-sm); color: var(--sec); text-decoration: underline; text-decoration-color: var(--border-2); text-underline-offset: 4px; white-space: nowrap; }
+.enl:hover { text-decoration-color: var(--sec); }
+.enl svg { flex: none; opacity: 0.7; }
+.stat .enl { display: flex; width: fit-content; margin: 8px 0 0; }
+
+/* Franja a mitad de página */
+.cta-mid { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; margin-top: 28px; padding: 20px 24px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--card-fx); }
+.cta-t { margin: 0; font: 600 var(--t-lg) / 1.25 var(--f-title); }
+
+/* Enseñanza e idiomas */
+.sub-h { margin: 0 0 14px; color: var(--muted); }
+.sub-h2 { margin-top: 40px; }
+.idiomas-esc { display: grid; gap: 18px; margin: 0; padding: 0; max-width: 460px; }
+.idioma { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); align-items: center; gap: 6px 16px; }
+.idi-n { margin: 0; font-weight: 600; }
+.cefr { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.paso { display: grid; place-items: center; height: 30px; border: 1px solid var(--border-2); border-radius: 6px; font: 600 0.6875rem / 1 var(--f-mono); letter-spacing: 0.04em; color: var(--muted); }
+.paso.on { background: var(--muted); border-color: var(--muted); color: var(--base); }
+.paso.prog { border-style: dashed; border-color: var(--muted); }
+.idi-e { grid-column: 2; margin: 0; font: 500 var(--t-xs) / 1.3 var(--f-mono); letter-spacing: 0.03em; color: var(--muted); }
+@media (max-width: 480px) {
+  .idioma { grid-template-columns: minmax(0, 1fr); }
+  .idi-e { grid-column: 1; }
 }

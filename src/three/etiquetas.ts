@@ -19,7 +19,7 @@ const CSS = `
 .etq.on{opacity:1}
 .etq.act{border-color:var(--acc)}
 .etq b{font-weight:700;color:var(--acc-txt,var(--acc))}
-@media (max-width:859px){.etq-capa{display:none}}
+@media (max-width:859px){.etq{font-size:10px;letter-spacing:.07em;padding:4px 6px}}
 `
 
 export interface Zona {

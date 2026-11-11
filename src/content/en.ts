@@ -37,7 +37,6 @@ export const en: Contenido = {
     repositorio: 'Repository',
     de: 'of',
     charlas: 'Talks and workshops',
-    idiomasEtiqueta: 'Languages',
     correoEtiqueta: 'Email',
     copiar: 'Copy',
     copiado: 'Copied',
@@ -52,6 +51,7 @@ export const en: Contenido = {
     cvEtiqueta: 'CV',
     cvFabAria: 'Download CV',
     pct: '%',
+    escribeme: 'Email me',
   },
 
   // First screen: it has to be enough on its own for a recruiter.
@@ -64,10 +64,20 @@ export const en: Contenido = {
     cifras: [
       { valor: '8', texto: 'systems in production' },
       { valor: '600+', texto: 'paper documents replaced' },
-      { valor: '39%', texto: 'fewer tokens with my open source plugin' },
+      { valor: '39%', texto: 'lower AI cost with my open source plugin' },
     ],
     botones: { cv: 'Download CV', contacto: 'Get in touch' },
     pista: 'Scroll down: the laptop comes apart piece by piece.',
+    resumen: {
+      titulo: 'In 30 seconds',
+      filas: [
+        { etiqueta: 'Roles', valor: 'Full-stack · Backend · Web3 · AI' },
+        { etiqueta: 'Availability', valor: 'Open to remote roles' },
+        { etiqueta: 'Time zone', valor: 'UTC−5 (Colombia)' },
+        { etiqueta: 'Education', valor: 'B.S. Systems Engineering, UIS · Jul. 2026' },
+        { etiqueta: 'Languages', valor: 'Spanish native · English B1' },
+      ],
+    },
   },
 
   sistemas: {
@@ -117,17 +127,40 @@ export const en: Contenido = {
     pieza: 'placa',
     titulo: 'The pieces I build with',
     intro: 'Where each one runs in production.',
-    chips: [
-      { nombre: 'Vue 3 + TypeScript', donde: 'Frontend of the 8 systems in production.' },
-      { nombre: 'Laravel / PHP', donde: 'APIs and business logic for those systems.' },
-      { nombre: 'SQL Server / MySQL', donde: 'Databases for quality, the ERP and reports.' },
-      { nombre: 'Visual Basic', donde: 'Maintenance of the ERP used by about 100 people.' },
-      { nombre: 'Python', donde: 'I taught it for 3 years; scripts and agents.' },
-      { nombre: 'three.js', donde: 'Willys por Colombia and this portfolio.' },
-      { nombre: 'MCP and Claude Code', donde: 'MCP server in production and the Tacaño plugin.' },
-      { nombre: 'Hedera', donde: 'Consensus, tokens and contracts in 4 hackathon projects.' },
-      { nombre: 'Power BI', donde: 'Dashboard hub for the company.' },
-      { nombre: 'Docker, Git, Vercel', donde: 'Deployment and daily work.' },
+    grupos: [
+      {
+        nombre: 'Frontend',
+        chips: [
+          { nombre: 'Vue 3 + TypeScript', donde: 'Frontend of the 8 systems in production.' },
+          { nombre: 'React / Next.js', donde: 'Hackathon projects: Roast Pitch, ScoutBrief and PULSO Tanda.' },
+          { nombre: 'three.js', donde: 'Willys por Colombia and this portfolio.' },
+        ],
+      },
+      {
+        nombre: 'Backend and data',
+        chips: [
+          { nombre: 'Laravel / PHP', donde: 'APIs and business logic for those systems.' },
+          { nombre: 'Node.js', donde: 'x402 Guard (payment proxy) and the ScoutBrief agent.' },
+          { nombre: 'SQL Server / MySQL', donde: 'Databases for quality, the ERP and reports.' },
+          { nombre: 'Visual Basic', donde: 'Maintenance of the ERP used by about 100 people.' },
+          { nombre: 'Power BI', donde: 'Dashboard hub for the company.' },
+        ],
+      },
+      {
+        nombre: 'AI and agents',
+        chips: [
+          { nombre: 'Python', donde: 'I taught it for 3 years; scripts and agents.' },
+          { nombre: 'MCP and Claude Code', donde: 'MCP server in production and the Tacaño plugin.' },
+        ],
+      },
+      {
+        nombre: 'Web3',
+        chips: [{ nombre: 'Hedera', donde: 'Consensus, tokens and contracts in 4 hackathon projects.' }],
+      },
+      {
+        nombre: 'Tools',
+        chips: [{ nombre: 'Docker, Git, Vercel', donde: 'Deployment and daily work.' }],
+      },
     ],
   },
 
@@ -141,7 +174,7 @@ export const en: Contenido = {
       },
       {
         nombre: 'Tacaño, an open source plugin for Claude Code',
-        texto: 'Cuts tokens by about 39%, measured by replaying 500 real turns. A small model decides when to compact and what to hand off to cheaper workers.',
+        texto: 'Cuts token use (the unit AI models bill by) by about 39%, measured by replaying 500 real turns. A small model decides when to compact and what to hand off to cheaper workers.',
         enlace: 'https://github.com/Nicolas6879/tacano',
         contador: 39,
       },
@@ -158,14 +191,17 @@ export const en: Contenido = {
     rol: { texto: 'Hedera Developer & Community Ambassador in Colombia', fechas: '2025 – present' },
     logros: [
       { valor: '1st', texto: 'Web3 cybersecurity challenge (CTF), Hedera DevDay, ETHDenver 2026' },
-      { valor: '2nd', texto: 'Hedera on-chain automation bounty, ETHDenver 2026' },
+      { valor: '2nd', texto: 'Hedera on-chain automation bounty, ETHDenver 2026', enlace: { texto: 'Devfolio', url: 'https://devfolio.co/projects/hive-protocol-8945' } },
       { valor: '~90', texto: 'people at Descifra Hedera, a talk and hackathon I organized at UIS' },
       { valor: '~220', texto: 'projects judged at ETHOnline and NEA Tech 2026' },
     ],
     charlas: [
-      'Speaker at Blockchain Summit Latam, Bogotá (Nov. 2026): tokenization and AI agents on Hedera.',
-      'Kickoff workshop for the Hedera APEX Hackathon in Mexico.',
-      'First dapp with students from vulnerable communities in Brazil.',
+      {
+        texto: 'Speaker at Blockchain Summit Latam, Bogotá (Nov. 2026): tokenization and AI agents on Hedera.',
+        enlace: { texto: 'Watch the livestream', url: 'https://x.com/HederaCommunity/status/2118054675480277119' },
+      },
+      { texto: 'Kickoff workshop for the Hedera APEX Hackathon in Mexico.' },
+      { texto: 'First dapp with students from vulnerable communities in Brazil.' },
     ],
   },
 
@@ -181,6 +217,34 @@ export const en: Contenido = {
         repo: 'https://github.com/Nicolas6879/willys-por-colombia',
       },
       {
+        nombre: 'PULSO Tanda',
+        meta: 'Stellar · Next.js · Hackathon',
+        texto: 'A group savings circle as a smart contract: if a member does not pay, their collateral covers the round, and the collateral earns yield while it waits. Runs on testnet.',
+        demo: 'https://pulso-tanda.vercel.app',
+        repo: 'https://github.com/Nicolas6879/pulso-tanda',
+      },
+      {
+        nombre: 'ScoutBrief',
+        meta: 'AI agents · Hedera · Next.js',
+        texto: 'A dashboard where an AI agent researches companies and pays for each service in HBAR, with spending caps and every decision logged on Hedera. Runs on testnet.',
+        demo: 'https://scout-brief-console.vercel.app',
+        repo: 'https://github.com/Nicolas6879/ScoutBrief',
+      },
+      {
+        nombre: 'Roast Pitch',
+        meta: 'AI agents · Next.js · Base',
+        texto: 'Five AI judges tear apart your startup pitch live, in parallel, and the verdict is anchored on Base. Runs on testnet.',
+        demo: 'https://pitchroast-omega.vercel.app',
+        repo: 'https://github.com/Nicolas6879/pitchroast',
+      },
+      {
+        nombre: 'Hive Protocol',
+        meta: 'Team project · 2nd place · ETHDenver 2026',
+        texto: 'Three AI agents that propose, execute and validate knowledge with no human in the loop.',
+        repo: 'https://github.com/Nicolas6879/HIVE',
+        prueba: { texto: 'Devfolio', url: 'https://devfolio.co/projects/hive-protocol-8945' },
+      },
+      {
         nombre: 'VerifiChain Visual',
         meta: 'Computer vision · Hedera',
         texto: 'An agent that inspects metal and concrete with computer vision and records every verdict on Hedera.',
@@ -192,20 +256,21 @@ export const en: Contenido = {
         texto: 'A payment proxy for AI agents: the agent never holds the keys and every payment is publicly audited.',
         repo: 'https://github.com/Nicolas6879/x402-guard',
       },
-      {
-        nombre: 'Hive Protocol',
-        meta: '2nd place · ETHDenver 2026',
-        texto: 'Three AI agents that propose, execute and validate knowledge with no human in the loop.',
-        repo: 'https://github.com/Nicolas6879/HIVE',
-      },
     ],
+    cta: { titulo: 'Does this fit your team?', correo: 'Email me' },
   },
 
   ensenanza: {
     pieza: 'teclado',
     titulo: 'I can explain what I build',
+    subEnsenanza: 'Teaching',
     texto:
       'Between 2021 and 2024 I taught Python to more than 150 students aged 10 to 20, in more than 30 courses. Today I mentor new developers in the Hedera community.',
+    subIdiomas: 'Languages',
+    idiomas: [
+      { nombre: 'Spanish', nivel: 6, etiqueta: 'Native', aria: 'Spanish: native' },
+      { nombre: 'English', nivel: 3, enCurso: true, etiqueta: 'B1 · B2 in progress', aria: 'English: B1, working toward B2' },
+    ],
   },
 
   trayectoria: {
@@ -215,10 +280,9 @@ export const en: Contenido = {
       { anio: '2019', texto: 'Technician in Industrial Electronic Equipment, SENA.' },
       { anio: '2021', texto: 'Begin Systems Engineering at UIS and start teaching programming.' },
       { anio: '2025', texto: 'Intern: I build the ISO 9001 quality system. Hedera Ambassador.' },
-      { anio: '2026', texto: 'Software engineer. ETHDenver. I graduate in July.' },
+      { anio: '2026', texto: 'Software engineer. ETHDenver. I graduated in July.' },
       { anio: '2027', texto: 'Your team, remotely.' },
     ],
-    idiomas: 'Spanish (native) · English (intermediate, B1, improving toward B2)',
   },
 
   contacto: {
@@ -226,6 +290,7 @@ export const en: Contenido = {
     titulo: 'Shall we build something together?',
     texto: 'I am looking for remote work as a full-stack developer or building AI agents.',
     email: 'jngv08@gmail.com',
+    asunto: 'Remote role — saw your portfolio',
     linkedin: 'https://www.linkedin.com/in/juan-nicolas-garcia-vega',
     github: 'https://github.com/Nicolas6879',
   },
@@ -238,11 +303,14 @@ export const en: Contenido = {
     escribe: 'type help',
     entradaAria: 'Terminal command',
     cerrar: 'Close',
+    toca: 'tap a command or type',
+    volver: 'Back to desktop',
     escritorioAria: 'nicOS desktop',
     ventanas: { leeme: 'Read me', proyectos: 'Projects', terminal: 'Terminal', correo: 'Mail', cv: 'CV' },
     arranque: {
       lineas: ['mounting /projects ... ok', 'loading hedera.ko ... ok', 'brewing coffee ... ok', 'starting nico ... ready'],
       saltar: 'press any key to skip',
+      saltarToque: 'tap to skip',
     },
     cvPropio: 'English version (PDF)',
     verEnPagina: 'See it on the page',

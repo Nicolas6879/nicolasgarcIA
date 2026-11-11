@@ -15,6 +15,14 @@
         if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
       } catch (e) {}
     </script>
+    <script>
+      // Solo en la página en inglés: sin preferencia guardada, un navegador en español sin venir de este sitio pasa a /es/.
+      try {
+        if (!localStorage.getItem('lang') && /^es/i.test(navigator.language || '') && document.referrer.indexOf(location.origin + '/') !== 0) {
+          location.replace('es/' + location.hash);
+        }
+      } catch (e) {}
+    </script>
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body>

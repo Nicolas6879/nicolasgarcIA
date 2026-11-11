@@ -1,7 +1,7 @@
 // Genera el HTML de la página a partir del contenido de un idioma (es.ts o en.ts).
 // Todos los enlaces a archivos de public/ y al otro idioma llevan el prefijo `raiz`,
 // porque con base './' la página en español vive una carpeta más abajo (/es/).
-import type { Contenido, ClaveSeccion, Pieza } from './content/tipos'
+import type { Contenido, ClaveSeccion, Pieza, EnlaceExtra } from './content/tipos'
 import { codigo } from './content/codigo'
 import { datosNicos, jsonSeguro } from './nicos/datos'
 
@@ -35,10 +35,22 @@ const ICONO_CODIGO = svg(14, 'M8.5 7L3.5 12l5 5M15.5 7l5 5-5 5')
 /** Separador ` · ` visible y tenue entre partes de una línea (en vez de un punto medio pegado al texto). */
 const sepa = (s: string): string => s.split(' · ').map(e).join('<span class="sep" aria-hidden="true">·</span>')
 
+/** mailto con asunto prellenado. */
+const mailto = (k: Contenido['contacto']): string => `mailto:${k.email}?subject=${encodeURIComponent(k.asunto)}`
+
+/** Enlace de texto externo (verificación de un premio o charla). */
+const enlaceExtra = (x: EnlaceExtra, u: Contenido['ui']): string =>
+  `<a class="enl" href="${e(x.url)}" target="_blank" rel="noopener"><span>${e(x.texto)}</span>${ICONO_EXTERNO}<span class="sr"> ${e(u.pestana)}</span></a>`
+
 /** Eyebrow de sección que une el contenido con la pieza del portátil: "02 — Pantalla". */
 function ojo(u: Contenido['ui'], pieza: Pieza, n: number): string {
   return `<p class="sec-eb rv"><span class="sec-n">${String(n).padStart(2, '0')}</span><span class="sec-dash" aria-hidden="true">—</span><span>${e(u.piezas[pieza])}</span></p>`
 }
+
+/** Hueco transparente de cada sección en móvil con 3D: el portátil se ve nítido a través de él (en escritorio no existe). */
+const VENTANA = '<div class="ventana" aria-hidden="true"></div>'
+/** Bloques de cristal esmerilado (móvil): `t` = cabecera de la sección (antes del hueco), `b` = el resto. En escritorio son transparentes al layout. */
+const cris = (t: 't' | 'b', html: string): string => `<div class="cris cris-${t}">${html}</div>`
 
 function ilustracion(): string {
   return `<svg class="laptop" viewBox="0 0 400 340" aria-hidden="true" focusable="false">
@@ -72,7 +84,7 @@ function cabecera(c: Contenido, raiz: string): string {
     <nav class="nav-main" aria-label="${e(u.navAria)}">${enlaces}</nav>
     <div class="top-actions">
       <a class="btn btn-sm btn-ghost cv-top" href="${cv}" download>${ICONO_DESCARGA}<span>${e(u.descargarCv)}</span></a>
-      <a class="lang-switch" id="idioma" href="${raiz}${u.idioma.ruta}" hreflang="${u.idioma.lang}" lang="${u.idioma.lang}" aria-label="${e(u.idioma.aria)}">${e(u.idioma.texto)}</a>
+      <a class="lang-switch" id="idioma" href="${raiz}${u.idioma.ruta}" hreflang="${u.idioma.lang}" lang="${u.idioma.lang}" aria-label="${e(u.idioma.aria)}" onclick="try{localStorage.setItem('lang','${u.idioma.lang}')}catch(e){}">${e(u.idioma.texto)}</a>
       <button type="button" class="nicos-btn" id="nicos-abrir" aria-label="${e(c.nicos.botonCabecera)}" aria-haspopup="dialog">${ICONO_NICOS}<span class="nb-t">${e(c.nicos.botonCabecera)}</span><kbd aria-hidden="true">Ctrl K</kbd></button>
       <button type="button" class="icon-btn" id="tema" aria-label="${e(u.temaAria)}">${ICONO_TEMA}</button>
     </div>
@@ -90,6 +102,14 @@ function visualMovil(raiz: string): string {
   return `<div class="hero-vis" aria-hidden="true">${img('oscuro')}${img('claro')}</div>`
 }
 
+/** Bloque "en 30 segundos": datos clave para un reclutador, justo bajo el héroe. */
+function resumen(c: Contenido['inicio']): string {
+  const filas = c.resumen.filas
+    .map((f) => `<div class="r-fila"><dt class="mono">${e(f.etiqueta)}</dt><dd>${f.valor.split(' · ').map(e).join(' <span class="sep" aria-hidden="true">·</span> ')}</dd></div>`)
+    .join('')
+  return `<div class="resumen rv"><p class="mono r-tit">${e(c.resumen.titulo)}</p><dl class="r-lista">${filas}</dl></div>`
+}
+
 function inicio(cc: Contenido, raiz: string): string {
   const c = cc.inicio
   const partes = c.nombre.split(' ')
@@ -99,14 +119,15 @@ function inicio(cc: Contenido, raiz: string): string {
     .map((f) => `<li><span class="big acc">${e(f.valor)}</span><span class="cap">${e(f.texto)}</span></li>`)
     .join('')
   return `<section id="inicio" data-pieza="${c.pieza}" class="hero" aria-labelledby="t-inicio">
-  <p class="eyebrow rv">${e(c.eyebrow)}</p>
+  ${cris('t', `<p class="eyebrow rv">${e(c.eyebrow)}</p>
   <h1 id="t-inicio" class="rv">${e(resto)} <span class="acc">${e(apellido)}</span></h1>
   <p class="lead rv">${e(c.frase)}</p>
   <p class="loc rv">${sepa(c.ubicacion)}</p>
   <ul class="cifras rv">${cifras}</ul>
   <p class="botones rv"><a class="btn cta-cv" href="${raiz}${cc.ui.cvPropio}" download>${e(c.botones.cv)}</a><a class="btn btn-ghost" href="#contacto">${e(c.botones.contacto)}</a>${cvOtro(cc, raiz)}</p>
-  <p class="pista rv">${e(c.pista)}</p>
-  ${visualMovil(raiz)}
+  <p class="pista rv">${e(c.pista)}</p>`)}
+  <div class="ventana ventana-hero" aria-hidden="true">${visualMovil(raiz)}</div>
+  ${cris('b', resumen(c))}
 </section>`
 }
 
@@ -131,23 +152,30 @@ function sistemas(c: Contenido['sistemas'], u: Contenido['ui'], o: Opciones): st
     })
     .join('')
   return `<section id="sistemas" data-pieza="${c.pieza}" aria-labelledby="t-sistemas">
-  ${ojo(u, c.pieza, 2)}
+  ${cris('t', `${ojo(u, c.pieza, 2)}
   <h2 id="t-sistemas" class="rv">${e(c.titulo)}</h2>
-  <p class="intro rv">${e(c.intro)}</p>
-  <ul class="cards">${items}</ul>
-  <p class="otros rv">${e(c.otros)}</p>
+  <p class="intro rv">${e(c.intro)}</p>`)}
+  ${VENTANA}
+  ${cris('b', `<ul class="cards">${items}</ul>
+  <p class="otros rv">${e(c.otros)}</p>`)}
 </section>`
 }
 
 function tecnologias(c: Contenido['tecnologias'], u: Contenido['ui']): string {
-  const chips = c.chips
-    .map((ch) => `<li class="tech"><span class="tech-n">${e(ch.nombre)}</span><span class="tech-d">${e(ch.donde)}</span></li>`)
+  const grupos = c.grupos
+    .map((g) => {
+      const chips = g.chips
+        .map((ch) => `<li class="tech"><span class="tech-n">${e(ch.nombre)}</span><span class="tech-d">${e(ch.donde)}</span></li>`)
+        .join('')
+      return `<div class="tgrupo rv"><h3 class="mono tg-n">${e(g.nombre)}</h3><ul class="techs" aria-label="${e(g.nombre)}">${chips}</ul></div>`
+    })
     .join('')
   return `<section id="tecnologias" data-pieza="${c.pieza}" aria-labelledby="t-tecnologias">
-  ${ojo(u, c.pieza, 3)}
+  ${cris('t', `${ojo(u, c.pieza, 3)}
   <h2 id="t-tecnologias" class="rv">${e(c.titulo)}</h2>
-  <p class="intro rv">${e(c.intro)}</p>
-  <ul class="techs rv" aria-label="${e(u.tecnologiasAria)}">${chips}</ul>
+  <p class="intro rv">${e(c.intro)}</p>`)}
+  ${VENTANA}
+  ${cris('b', grupos)}
 </section>`
 }
 
@@ -164,50 +192,67 @@ function ia(c: Contenido['ia'], u: Contenido['ui']): string {
   }
   const todas = [...c.items.filter((i) => i.contador !== undefined), ...c.items.filter((i) => i.contador === undefined)]
   return `<section id="ia" data-pieza="${c.pieza}" aria-labelledby="t-ia">
-  ${ojo(u, c.pieza, 4)}
-  <h2 id="t-ia" class="rv">${e(c.titulo)}</h2>
-  <ul class="cards cards-ia">${todas.map(tarjeta).join('')}</ul>
+  ${cris('t', `${ojo(u, c.pieza, 4)}
+  <h2 id="t-ia" class="rv">${e(c.titulo)}</h2>`)}
+  ${VENTANA}
+  ${cris('b', `<ul class="cards cards-ia">${todas.map(tarjeta).join('')}</ul>`)}
 </section>`
 }
 
 function comunidad(c: Contenido['comunidad'], u: Contenido['ui']): string {
   const logros = c.logros
-    .map((l) => `<li class="card card-txt stat rv"><p class="big acc">${e(l.valor)}</p><p>${e(l.texto)}</p></li>`)
+    .map((l) => `<li class="card card-txt stat rv"><p class="big acc">${e(l.valor)}</p><p>${e(l.texto)}${l.enlace ? ` ${enlaceExtra(l.enlace, u)}` : ''}</p></li>`)
     .join('')
-  const charlas = c.charlas.map((t) => `<li>${e(t)}</li>`).join('')
+  const charlas = c.charlas.map((t) => `<li>${e(t.texto)}${t.enlace ? ` ${enlaceExtra(t.enlace, u)}` : ''}</li>`).join('')
   return `<section id="comunidad" data-pieza="${c.pieza}" aria-labelledby="t-comunidad">
-  ${ojo(u, c.pieza, 5)}
+  ${cris('t', `${ojo(u, c.pieza, 5)}
   <h2 id="t-comunidad" class="rv">${e(c.titulo)}</h2>
-  <p class="rol rv"><strong>${e(c.rol.texto)}</strong><span class="tag">${e(c.rol.fechas)}</span></p>
-  <ul class="cards cards-2 cards-stats">${logros}</ul>
+  <p class="rol rv"><strong>${e(c.rol.texto)}</strong><span class="tag">${e(c.rol.fechas)}</span></p>`)}
+  ${VENTANA}
+  ${cris('b', `<ul class="cards cards-2 cards-stats">${logros}</ul>
   <h3 class="rv">${e(u.charlas)}</h3>
-  <ul class="lista rv">${charlas}</ul>
+  <ul class="lista rv">${charlas}</ul>`)}
 </section>`
 }
 
-function proyectos(c: Contenido['proyectos'], u: Contenido['ui']): string {
+function proyectos(c: Contenido['proyectos'], u: Contenido['ui'], k: Contenido['contacto'], cv: string): string {
   const items = c.items
     .map((it) => {
       const aria = `<span class="sr"> ${e(u.de)} ${e(it.nombre)} ${e(u.pestana)}</span>`
       const links = [
         it.demo ? `<a class="btn btn-sm btn-acc" href="${e(it.demo)}" target="_blank" rel="noopener"><span>${e(u.demo)}</span>${ICONO_EXTERNO}${aria}</a>` : '',
         it.repo ? `<a class="btn btn-sm btn-ghost" href="${e(it.repo)}" target="_blank" rel="noopener">${ICONO_CODIGO}<span>${e(u.repositorio)}</span>${aria}</a>` : '',
+        it.prueba ? `<a class="btn btn-sm btn-ghost" href="${e(it.prueba.url)}" target="_blank" rel="noopener"><span>${e(it.prueba.texto)}</span>${ICONO_EXTERNO}${aria}</a>` : '',
       ].join('')
       return `<li class="card card-txt proj rv"><p class="meta">${sepa(it.meta)}</p><h3>${e(it.nombre)}</h3><p>${e(it.texto)}</p><p class="links">${links}</p></li>`
     })
     .join('')
   return `<section id="proyectos" data-pieza="${c.pieza}" aria-labelledby="t-proyectos">
-  ${ojo(u, c.pieza, 6)}
-  <h2 id="t-proyectos" class="rv">${e(c.titulo)}</h2>
-  <ul class="cards cards-2">${items}</ul>
+  ${cris('t', `${ojo(u, c.pieza, 6)}
+  <h2 id="t-proyectos" class="rv">${e(c.titulo)}</h2>`)}
+  ${VENTANA}
+  ${cris('b', `<ul class="cards cards-2">${items}</ul>
+  <div class="cta-mid rv"><p class="cta-t">${e(c.cta.titulo)}</p><p class="botones"><a class="btn" href="${e(mailto(k))}">${e(c.cta.correo)}</a><a class="btn btn-ghost" href="${e(cv)}" download>${ICONO_DESCARGA}<span>${e(u.descargarCv)}</span></a></p></div>`)}
 </section>`
 }
 
+const CEFR = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const
+
 function ensenanza(c: Contenido['ensenanza'], u: Contenido['ui']): string {
+  const idiomas = c.idiomas
+    .map((l) => {
+      const pasos = CEFR.map((n, i) => `<span class="paso${i < l.nivel ? ' on' : l.enCurso && i === l.nivel ? ' prog' : ''}">${n}</span>`).join('')
+      return `<li class="idioma"><p class="idi-n">${e(l.nombre)}</p><div class="cefr" role="img" aria-label="${e(l.aria)}">${pasos}</div><p class="idi-e" aria-hidden="true">${e(l.etiqueta)}</p></li>`
+    })
+    .join('')
   return `<section id="ensenanza" data-pieza="${c.pieza}" aria-labelledby="t-ensenanza">
-  ${ojo(u, c.pieza, 7)}
-  <h2 id="t-ensenanza" class="rv">${e(c.titulo)}</h2>
+  ${cris('t', `${ojo(u, c.pieza, 7)}
+  <h2 id="t-ensenanza" class="rv">${e(c.titulo)}</h2>`)}
+  ${VENTANA}
+  ${cris('b', `<h3 class="mono sub-h rv">${e(c.subEnsenanza)}</h3>
   <p class="destacado rv">${e(c.texto)}</p>
+  <h3 class="mono sub-h sub-h2 rv">${e(c.subIdiomas)}</h3>
+  <ul class="idiomas-esc rv">${idiomas}</ul>`)}
 </section>`
 }
 
@@ -216,29 +261,30 @@ function trayectoria(c: Contenido['trayectoria'], u: Contenido['ui']): string {
     .map((h) => `<li class="rv"><span class="anio">${e(h.anio)}</span><p>${e(h.texto)}</p></li>`)
     .join('')
   return `<section id="trayectoria" data-pieza="${c.pieza}" aria-labelledby="t-trayectoria">
-  ${ojo(u, c.pieza, 8)}
-  <h2 id="t-trayectoria" class="rv">${e(c.titulo)}</h2>
-  <ol class="timeline">${hitos}</ol>
-  <dl class="idiomas rv"><dt class="mono">${e(u.idiomasEtiqueta)}</dt><dd>${sepa(c.idiomas)}</dd></dl>
+  ${cris('t', `${ojo(u, c.pieza, 8)}
+  <h2 id="t-trayectoria" class="rv">${e(c.titulo)}</h2>`)}
+  ${VENTANA}
+  ${cris('b', `<ol class="timeline">${hitos}</ol>`)}
 </section>`
 }
 
 function contacto(c: Contenido['contacto'], n: Contenido['nicos'], u: Contenido['ui']): string {
   return `<section id="contacto" data-pieza="${c.pieza}" aria-labelledby="t-contacto">
-  ${ojo(u, c.pieza, 9)}
+  ${cris('t', `${ojo(u, c.pieza, 9)}
   <h2 id="t-contacto" class="rv">${e(c.titulo)}</h2>
-  <p class="intro rv">${e(c.texto)}</p>
-  <div class="correo rv">
+  <p class="intro rv">${e(c.texto)}</p>`)}
+  ${VENTANA}
+  ${cris('b', `<div class="correo rv">
     <span class="mono">${e(u.correoEtiqueta)}</span>
-    <p class="mail"><a id="correo" href="mailto:${e(c.email)}">${e(c.email)}</a><button type="button" class="btn btn-ghost btn-sm" id="copiar" data-valor="${e(c.email)}" data-ok="${e(u.copiado)}" data-fallo="${e(u.copiarFallo)}" data-aviso-ok="${e(u.avisoCopiado)}" data-aviso-fallo="${e(u.avisoFallo)}">${e(u.copiar)}</button></p>
+    <p class="mail"><a id="correo" href="${e(mailto(c))}">${e(c.email)}</a><button type="button" class="btn btn-ghost btn-sm" id="copiar" data-valor="${e(c.email)}" data-ok="${e(u.copiado)}" data-fallo="${e(u.copiarFallo)}" data-aviso-ok="${e(u.avisoCopiado)}" data-aviso-fallo="${e(u.avisoFallo)}">${e(u.copiar)}</button></p>
     <span class="sr" role="status" id="copiado"></span>
   </div>
   <p class="botones rv"><a class="btn" href="${e(c.linkedin)}" target="_blank" rel="noopener">LinkedIn<span class="sr"> ${e(u.pestana)}</span></a><a class="btn btn-ghost" href="${e(c.github)}" target="_blank" rel="noopener">GitHub<span class="sr"> ${e(u.pestana)}</span></a></p>
   <div class="pantalla rv" id="mini-term"><div class="mini-fb">
     <p class="mono">&gt; ${e(n.bienvenida)}<i class="cursor" aria-hidden="true"></i></p>
-    <ul class="mini-links"><li>&gt; mail: <a href="mailto:${e(c.email)}">${e(c.email)}</a></li><li>&gt; linkedin: <a href="${e(c.linkedin)}" target="_blank" rel="noopener">${e(c.linkedin.replace('https://www.', ''))}</a></li><li>&gt; github: <a href="${e(c.github)}" target="_blank" rel="noopener">${e(c.github.replace('https://', ''))}</a></li></ul>
+    <ul class="mini-links"><li>&gt; mail: <a href="${e(mailto(c))}">${e(c.email)}</a></li><li>&gt; linkedin: <a href="${e(c.linkedin)}" target="_blank" rel="noopener">${e(c.linkedin.replace('https://www.', ''))}</a></li><li>&gt; github: <a href="${e(c.github)}" target="_blank" rel="noopener">${e(c.github.replace('https://', ''))}</a></li></ul>
   </div></div>
-  <p class="botones rv nicos-js"><button type="button" class="btn btn-ghost btn-term nicos-boot" id="nicos-encender" aria-haspopup="dialog">${ICONO_NICOS}<span>${e(n.encender)}</span></button></p>
+  <p class="botones rv nicos-js"><button type="button" class="btn btn-ghost btn-term nicos-boot" id="nicos-encender" aria-haspopup="dialog">${ICONO_NICOS}<span>${e(n.encender)}</span></button></p>`)}
 </section>`
 }
 
@@ -335,7 +381,7 @@ ${sistemas(c.sistemas, c.ui, o)}
 ${tecnologias(c.tecnologias, c.ui)}
 ${ia(c.ia, c.ui)}
 ${comunidad(c.comunidad, c.ui)}
-${proyectos(c.proyectos, c.ui)}
+${proyectos(c.proyectos, c.ui, c.contacto, raiz + c.ui.cvPropio)}
 ${ensenanza(c.ensenanza, c.ui)}
 ${trayectoria(c.trayectoria, c.ui)}
 ${contacto(c.contacto, c.nicos, c.ui)}

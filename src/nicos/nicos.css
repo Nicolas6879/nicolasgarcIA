@@ -23,19 +23,53 @@
   font: inherit; color: inherit; caret-color: var(--acc-txt); border-radius: 0;
 }
 .nt-input::placeholder { color: var(--muted); opacity: 0.85; }
-@media (max-width: 859px) { .nt-input { font-size: 16px; } }
+@media (max-width: 859px), (pointer: coarse) { .nt-input { font-size: 16px; } }
+.nt-hint, .nt-chips { display: none; }
+.nt-chip {
+  flex: none; min-height: 36px; padding: 0 13px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  background: var(--base); color: var(--sec); border: 1.5px solid var(--border); font: 600 0.8125rem var(--f-mono);
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.nt-chip:active { background: var(--sec); color: var(--base); }
+.nt-chip-x { color: var(--acc-txt); border-style: dashed; }
+/* Táctil / móvil: la entrada y las fichas quedan fijas abajo; tocar la línea abre el teclado. */
+@media (max-width: 859px), (pointer: coarse) {
+  .nt { display: flex; flex-direction: column; -webkit-overflow-scrolling: touch; }
+  .nt-log { flex: 1 0 auto; }
+  .nt-dock {
+    position: sticky; bottom: 0; margin: 8px -14px -12px; padding: 8px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface); border-top: 1px solid var(--border);
+  }
+  .nt-hint { display: block; margin-bottom: 6px; font-size: 0.6875rem; color: var(--muted); letter-spacing: 0.02em; }
+  .nt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .nt-form {
+    align-items: center; min-height: 44px; padding: 0 12px; border: 1.5px solid var(--border); border-radius: 10px; background: var(--base);
+  }
+  .nt-form:focus-within { border-color: var(--acc); }
+  .nt-input { min-height: 42px; }
+}
 
 /* Mini-terminal de la sección de contacto: 6 líneas visibles. */
 .pantalla.mini-activa { display: block; padding: 14px 16px; }
 .nt-mini { background: transparent; padding: 0; height: calc(6 * 1.55 * 0.8125rem); }
+@media (max-width: 859px), (pointer: coarse) {
+  .nt-mini { height: 17.5rem; width: 100%; min-width: 0; box-sizing: border-box; scrollbar-width: none; }
+  .nt-mini::-webkit-scrollbar { display: none; }
+  .pantalla.mini-activa { padding: 12px 14px 0; }
+  .nt-mini .nt-dock { margin: 6px 0 0; padding: 6px 0 12px; background: var(--card-2); border-top: 0; }
+  .nt-mini .nt-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-bottom: 6px; padding-bottom: 2px; }
+  .nt-mini .nt-chips::-webkit-scrollbar { display: none; }
+}
 .pantalla.mini-activa:focus-within { border-color: var(--acc); }
 
 /* ---------- Overlay ---------- */
-html.nicos-abierto, html.nicos-abierto body { overflow: hidden; }
+html.nicos-abierto, html.nicos-abierto body { overflow: hidden; overscroll-behavior: none; }
 .nicos {
   position: fixed; inset: 0; z-index: 300; background: var(--base); color: var(--sec);
-  font-family: var(--f-text); outline: none;
+  font-family: var(--f-text); outline: none; overscroll-behavior: contain; touch-action: manipulation;
+  -webkit-text-size-adjust: 100%;
 }
+@supports (height: 100dvh) { .nicos { height: 100dvh; bottom: auto; } }
 .nicos[hidden], .nicos [hidden] { display: none !important; }
 .nx-desk {
   position: absolute; inset: 0; overflow: hidden;
@@ -59,6 +93,7 @@ html.nicos-abierto, html.nicos-abierto body { overflow: hidden; }
   background: var(--base); color: var(--sec); border: 2px solid var(--sec); font: 600 0.6875rem var(--f-mono);
 }
 .nx-close:hover { background: var(--sec); color: var(--base); }
+.nx-wb, .nx-wc { display: none; }
 
 /* Iconos del escritorio */
 .nx-icons { position: absolute; left: 14px; top: 58px; display: grid; gap: 10px; width: 92px; }
@@ -150,6 +185,8 @@ html.nicos-abierto, html.nicos-abierto body { overflow: hidden; }
 .nx-boot-log li { opacity: 0; transition: opacity 0.1s; }
 .nx-boot-log li.on { opacity: 1; }
 .nx-boot-skip { margin: 18px 0 0; font: 400 0.75rem var(--f-mono); color: var(--muted); opacity: 0.8; }
+.nx-boot-skip .nx-t { display: none; }
+@media (pointer: coarse) { .nx-boot-skip .nx-k { display: none; } .nx-boot-skip .nx-t { display: inline; } }
 .nx-boot-fin { opacity: 0; transition: opacity 0.15s; }
 
 /* Entrada y salida */
@@ -162,21 +199,41 @@ html.nicos-abierto, html.nicos-abierto body { overflow: hidden; }
 .nicos.nx-entra { animation: nx-fadein 0.2s ease-out; }
 .nicos.nx-sale { animation: nx-fadeout 0.15s ease-in forwards; }
 
-/* Móvil: iconos en rejilla y una ventana a pantalla completa cada vez */
+/* Móvil: lanzador de iconos y una app a pantalla completa cada vez (sin barra: la app lleva atrás y cerrar) */
 @media (max-width: 859px) {
-  .nx-icons { left: 0; right: 0; top: 38px; width: auto; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 22px 14px; gap: 14px 10px; }
-  .nx-win, .nx-win.nx-w-terminal {
-    left: 0 !important; top: 38px !important; right: 0; bottom: 0; width: auto; height: auto; max-height: none;
-    border-radius: 0; border-width: 2px 0 0; box-shadow: none !important;
-  }
-  .nx-tb { cursor: default; padding: 4px 6px 4px 14px; }
-  .nx-wx { width: 44px; height: 44px; border-radius: 8px; }
-  .nx-bar { height: 52px; }
-  .nx-icons { top: 52px; }
-  .nx-win, .nx-win.nx-w-terminal { top: 52px !important; }
+  .nx-bar { height: 52px; touch-action: none; padding-top: env(safe-area-inset-top, 0px); }
   .nx-close { height: 44px; min-width: 44px; justify-content: center; padding: 0 12px; }
-  .nx-btn { min-height: 44px; }
-  .nx-ico { min-height: 44px; }
   .nx-close span { display: none; }
+  .nx-icons {
+    left: 0; right: 0; top: 52px; width: auto; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+    padding: 20px 16px; touch-action: none;
+  }
+  .nx-ico {
+    min-height: 96px; justify-content: center; padding: 12px 4px 10px; background: var(--surface);
+    border: 2px solid var(--border); border-radius: 14px; font-size: 0.75rem;
+  }
+  .nx-ico:active { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 10%, var(--surface)); }
+  .nx-ico svg { width: 38px; height: 38px; }
+  .nx-win, .nx-win.nx-w-terminal {
+    left: 0 !important; top: 52px !important; right: 0; bottom: 0; width: auto; height: auto; max-height: none;
+    border-radius: 0; border-width: 2px 0 0; box-shadow: none !important; background: var(--base);
+  }
+  .nx-app .nx-bar { display: none; }
+  .nx-app .nx-win, .nx-app .nx-win.nx-w-terminal { top: 0 !important; border-top-width: 0; }
+  .nx-tb {
+    cursor: default; padding: calc(4px + env(safe-area-inset-top, 0px)) 6px 4px 6px; min-height: 52px; justify-content: flex-start; gap: 6px;
+  }
+  .nx-tt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.875rem; }
+  .nx-wx { display: none; }
+  .nx-wb, .nx-wc {
+    display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 8px; cursor: pointer;
+    background: var(--base); color: var(--sec); border: 2px solid var(--sec);
+  }
+  .nx-wb:active, .nx-wc:active { background: var(--sec); color: var(--base); }
+  .nx-tb::after { content: ''; position: absolute; left: 50%; top: 5px; width: 36px; height: 4px; margin-left: -18px; border-radius: 2px; background: currentColor; opacity: 0.25; }
+  .nx-tb { position: relative; }
+  .nx-btn { min-height: 44px; }
   .nx-cifras b { font-size: 1.3rem; }
+  .nx-body { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .nx-w-terminal .nx-body { padding-bottom: 0; }
 }

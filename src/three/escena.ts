@@ -14,6 +14,7 @@ import { crearPantallaInicio } from './pantallaInicio'
 import { crearEntorno } from './entorno'
 import { crearSombras } from './sombra'
 import { crearEtiquetas, type Entrada } from './etiquetas'
+import { crearVentanas, girable, type Rect } from './ventanas'
 
 const SIN_RESALTE = new Set(['tapa', 'chasis']) // inicio y contacto muestran el portátil entero
 const FOV = 35
@@ -63,7 +64,11 @@ const PASOS: Paso[] = [
 export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Promise<void> {
   const { reduce } = opc
   const url = stage.dataset.modelo ?? 'models/laptop.glb'
-  const PR = Math.min(window.devicePixelRatio, 1.5)
+  let PR = Math.min(window.devicePixelRatio, 1.5) // en móvil baja a 1,25 / 1 si los fotogramas tardan
+  const mqMovil = window.matchMedia('(max-width: 859px)')
+  let movil = mqMovil.matches // móvil: el canvas es el fondo y el portátil se encuadra en el hueco activo (ventanas.ts)
+  const ventanas = crearVentanas()
+  const drag = { az: 0 } // giro táctil del hero (grados)
 
   const canvas = document.createElement('canvas')
   canvas.setAttribute('aria-hidden', 'true')
@@ -451,7 +456,68 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   let zonaW = 1
   let zonaH = 1
   const zona = { l: 0, t: 0, r: 1, b: 1 }
+  // Móvil: el búfer usa la altura de viewport grande (100lvh) para no reasignarlo cada vez que la barra del navegador se
+  // esconde; el encuadre se calcula igualmente sobre la zona visible.
+  const sonda = document.createElement('div')
+  sonda.style.cssText = 'position:fixed;left:0;top:0;width:0;height:100vh;visibility:hidden;pointer-events:none'
+  sonda.style.height = '100lvh'
+  document.body.appendChild(sonda)
+  let tRefresco = 0
+  const pedirRefresco = () => {
+    clearTimeout(tRefresco)
+    tRefresco = window.setTimeout(() => ScrollTrigger.refresh(), 120)
+  }
+  const cabecera0 = document.querySelector<HTMLElement>('header.top')
+  const rectMov: Rect = { l: 0, t: 0, r: 1, b: 1 }
+  const objetivo: Rect = { l: 0, t: 0, r: 1, b: 1 }
+  let rectListo = false
+  let rectAnim = true
+  let pesoVentana = 0
+  let etqVisible = false
+  let yPrev = -1
+  let tPrevRect = performance.now()
+  let cabH = 102
+  const ajustarMovil = () => {
+    const W = document.documentElement.clientWidth
+    const Hc = sonda.offsetHeight || window.innerHeight
+    cabH = cabecera0?.offsetHeight ?? 102
+    if (!W || !Hc) return
+    if (W !== ancho || Hc !== alto) {
+      ancho = W
+      alto = Hc
+      renderer.setSize(W, Hc, false)
+      camera.aspect = W / Hc
+      renderer.getDrawingBufferSize(resolucion)
+      for (const m of bordes.values()) m.resolution.copy(resolucion)
+    }
+    ventanas.medir()
+    rectListo = false
+    rectAnim = true
+    pedir()
+  }
+  const actualizarRect = (dt: number) => {
+    const Hv = window.innerHeight
+    pesoVentana = ventanas.objetivo(ancho, Hv, cabH, objetivo)
+    if (pesoVentana > 0.85) etqVisible = true
+    else if (pesoVentana < 0.5) etqVisible = false
+    const k = rectListo ? 1 - Math.exp(-Math.min(dt, 0.04) * 14) : 1
+    rectListo = true
+    let mov = 0
+    for (const c of ['l', 't', 'r', 'b'] as const) mov = Math.max(mov, Math.abs(objetivo[c] - rectMov[c]))
+    for (const c of ['l', 't', 'r', 'b'] as const) rectMov[c] += (objetivo[c] - rectMov[c]) * (mov < 0.3 ? 1 : k)
+    rectAnim = mov >= 0.3
+    zonaW = rectMov.r - rectMov.l
+    zonaH = rectMov.b - rectMov.t
+    const cx = (rectMov.l + rectMov.r) / 2
+    const cy = (rectMov.t + rectMov.b) / 2
+    camera.setViewOffset(ancho, alto, ancho / 2 - cx, alto / 2 - cy, ancho, alto)
+    camera.updateProjectionMatrix()
+    Object.assign(zona, rectMov)
+    sucio = true
+  }
   const ajustar = () => {
+    movil = mqMovil.matches
+    if (movil) return ajustarMovil()
     const W = document.documentElement.clientWidth
     const H = window.innerHeight
     const r = stage.getBoundingClientRect()
@@ -475,6 +541,18 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   }
   new ResizeObserver(ajustar).observe(stage)
   new ResizeObserver(ajustar).observe(document.documentElement)
+  // Móvil: si cambia la altura del contenido (imágenes, fuentes, apertura de huecos) se vuelven a medir los huecos.
+  const principal = document.getElementById('contenido')
+  if (principal) {
+    new ResizeObserver(() => {
+      if (!movil) return
+      if (ventanas.medir()) {
+        pedirRefresco()
+        rectAnim = true
+        pedir()
+      }
+    }).observe(principal)
+  }
 
   // ---- Cámara: siempre encuadra TODO el portátil en su pose actual (con la tapa abierta) ----
   const mouse = { x: 0, y: 0, sx: 0, sy: 0 }
@@ -500,9 +578,9 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   const colocarCamara = () => {
     caja.getCenter(centro)
     // Punto de mira: el centro del conjunto, desplazado hacia la pieza activa.
-    mira.set(S.fx, S.fy, S.fz).sub(centro).multiplyScalar(S.fw).add(centro)
+    mira.set(S.fx, S.fy, S.fz).sub(centro).multiplyScalar(movil ? S.fw * 0.6 : S.fw).add(centro)
     // Dirección de la cámara según azimut/elevación (+ giro suave del ratón).
-    const az = S.az * RAD - mouse.sx * 0.1
+    const az = S.az * RAD - mouse.sx * 0.1 + drag.az * RAD
     const el = Math.max(5 * RAD, S.el * RAD + mouse.sy * 0.05)
     dir.set(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el))
     der.crossVectors(ARRIBA, dir).normalize()
@@ -518,7 +596,7 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
       const prof = rel.dot(dir)
       d = Math.max(d, prof + Math.abs(rel.dot(der)) / tH, prof + Math.abs(rel.dot(arr)) / tV)
     }
-    d = Math.max(d / Math.min(S.zoom, 1.2), 0.2)
+    d = Math.max(d / Math.min(S.zoom, movil ? 1 : 1.2), 0.2) // móvil: siempre el portátil entero en el hueco
     camera.position.copy(mira).addScaledVector(dir, d)
     camera.lookAt(mira)
   }
@@ -534,7 +612,9 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     const act = stage.dataset.active
     entradas.length = 0
     let todas = false
-    if (act && act === piezaTray && (reduce || S.tapa / TODO.tapa > 0.9)) {
+    if (movil && !etqVisible) {
+      /* fuera del hueco no hay etiquetas */
+    } else if (act && act === piezaTray && (reduce || S.tapa / TODO.tapa > 0.9)) {
       todas = true
       for (const n of claves) entradas.push({ id: n, x: 0, y: 0, x0: 0, x1: 0, y0: 0, y1: 0 })
     } else if (act && !SIN_RESALTE.has(act) && act !== piezaTray && (reduce || progresoPieza(act) > 0.55)) entradas.push({ id: act, x: 0, y: 0, x0: 0, x1: 0, y0: 0, y1: 0 })
@@ -565,8 +645,26 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   const bobEstado = { env: 0, n: 0 }
   let introHecha = reduce
   const normalPantalla = new THREE.Vector3(0, 0.342, 0.94)
+  let renderPrev = 0
+  let tMuestra = 0
+  let nMuestra = 0
+  const t0 = performance.now()
   const dibujar = () => {
     if (document.hidden || !ancho) return
+    if (mqMovil.matches !== movil) ajustar()
+    if (movil) {
+      const y = window.scrollY
+      if (y !== yPrev || rectAnim || !rectListo) {
+        const ahora = performance.now()
+        yPrev = y
+        if (ventanas.abrir()) pedirRefresco()
+        const id = ventanas.activa(y, cabH, window.innerHeight)
+        const p = document.getElementById(id)?.dataset.pieza
+        if (p && stage.dataset.active !== p) stage.dataset.active = p
+        actualizarRect((ahora - tPrevRect) / 1000)
+        tPrevRect = ahora
+      } else tPrevRect = performance.now()
+    }
     let bob = 0
     if (!reduce) {
       const dx = mouse.x - mouse.sx
@@ -606,6 +704,25 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     camera.updateMatrixWorld()
     if (actualizarEtiquetas(bob, reduce)) sucio = true
     renderer.render(scene, camera)
+    if (movil) {
+      // Si los fotogramas seguidos tardan demasiado (GPU modesta), baja la resolución un escalón (1,5 -> 1,25 -> 1).
+      const ahora = performance.now()
+      if (renderPrev && ahora - renderPrev < 120 && ahora - t0 > 3000) {
+        tMuestra += ahora - renderPrev
+        if (++nMuestra === 45) {
+          if (tMuestra / nMuestra > 27 && PR > 1) {
+            PR = PR > 1.25 ? 1.25 : 1
+            renderer.setPixelRatio(PR)
+            renderer.getDrawingBufferSize(resolucion)
+            for (const m of bordes.values()) m.resolution.copy(resolucion)
+            pintar()
+          }
+          tMuestra = 0
+          nMuestra = 0
+        }
+      }
+      renderPrev = ahora
+    }
   }
   gsap.ticker.add(dibujar)
 
@@ -615,22 +732,39 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
     aplicar(S)
   } else {
     gsap.registerPlugin(ScrollTrigger)
+    // Móvil: giro con un dedo en el hero (horizontal, ±35°, vuelve solo al soltar).
+    const heroVentana = document.querySelector<HTMLElement>('.ventana-hero')
+    if (heroVentana)
+      girable(
+        heroVentana,
+        (g) => {
+          gsap.killTweensOf(drag)
+          gsap.to(drag, { az: g, duration: 0.12, ease: 'none', overwrite: true, onUpdate: pedir })
+        },
+        () => {
+          gsap.killTweensOf(drag)
+          gsap.to(drag, { az: 0, duration: 0.9, ease: 'elastic.out(1, 0.6)', onUpdate: pedir })
+        },
+      )
     window.addEventListener('pointermove', (ev) => {
+      if (movil) return
       mouse.x = (ev.clientX / window.innerWidth) * 2 - 1
       mouse.y = (ev.clientY / window.innerHeight) * 2 - 1
     })
 
-    // Lenis + ScrollTrigger
-    const lenis = new Lenis({ autoRaf: false })
-    lenis.on('scroll', ScrollTrigger.update)
-    gsap.ticker.add((t) => lenis.raf(t * 1000))
+    // Lenis + ScrollTrigger (en táctil se deja el scroll nativo: sin Lenis, ScrollTrigger escucha el scroll del navegador)
+    const tactil = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+    const lenis = tactil ? null : new Lenis({ autoRaf: false })
+    if (tactil) ScrollTrigger.config({ ignoreMobileResize: true })
+    lenis?.on('scroll', ScrollTrigger.update)
+    if (lenis) gsap.ticker.add((t) => lenis.raf(t * 1000))
     // nicOS (overlay) bloquea el scroll de la página mientras está abierto.
-    window.addEventListener('nicos:open', () => lenis.stop())
-    window.addEventListener('nicos:close', () => lenis.start())
-    if (document.documentElement.classList.contains('nicos-abierto')) lenis.stop()
+    window.addEventListener('nicos:open', () => lenis?.stop())
+    window.addEventListener('nicos:close', () => lenis?.start())
+    if (lenis && document.documentElement.classList.contains('nicos-abierto')) lenis.stop()
     gsap.ticker.lagSmoothing(0)
     const cabecera = document.querySelector<HTMLElement>('header.top')
-    document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => {
+    if (lenis) document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]').forEach((a) => {
       a.addEventListener('click', (ev) => {
         const id = a.getAttribute('href')!.slice(1)
         const dest = id ? document.getElementById(id) : null
@@ -643,6 +777,39 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
       })
     })
 
+    // Móvil: la transición hacia una sección acaba cuando su hueco queda centrado y empieza antes (hasta 1,2 pantallas, como mucho
+    // el 60 % del recorrido desde el hueco anterior), así la pose coincide con la del hueco que se está viendo.
+    const finMovil = (i: number) => {
+      const H = window.innerHeight
+      return Math.max(1, Math.min(ventanas.centro(PASOS[i].id, cabH, H), ventanas.maxScroll))
+    }
+    const inicioMovil = (i: number) => {
+      const fin = finMovil(i)
+      const H = window.innerHeight
+      const previo = Math.max(0, Math.min(ventanas.centro(PASOS[i - 1].id, cabH, H), fin - 1))
+      return Math.max(0, fin - Math.min(0.6 * (fin - previo), 1.2 * H), previo)
+    }
+    ScrollTrigger.addEventListener('refreshInit', () => {
+      if (movil) ventanas.medir()
+    })
+    // Tras recalcular (los huecos se abren y cambian las posiciones) ScrollTrigger puede dejar S en el estado "desde" de la última
+    // transición; se reescribe según el scroll actual para que no haya saltos de pose.
+    const disparadores: ScrollTrigger[] = []
+    const reparar = () => {
+      if (!movil) return
+      const y = window.scrollY
+      Object.assign(S, estados[0])
+      for (let i = 1; i < PASOS.length; i++) {
+        const st = disparadores[i - 1]
+        if (!st) break
+        const p = Math.min(1, Math.max(0, (y - st.start) / Math.max(1, st.end - st.start)))
+        if (p <= 0) break
+        for (const k of Object.keys(estados[i])) S[k] = estados[i - 1][k] + (estados[i][k] - estados[i - 1][k]) * p
+      }
+      pedir()
+    }
+    ScrollTrigger.addEventListener('refresh', reparar)
+    if (movil) ventanas.medir()
     // Una transición por sección, de su estado anterior al suyo, atada al scroll (reversible).
     for (let i = 1; i < PASOS.length; i++) {
       const sec = document.getElementById(PASOS[i].id)
@@ -652,9 +819,15 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
         ease: 'none',
         immediateRender: false,
         onUpdate: pedir,
-        scrollTrigger: { trigger: sec, start: 'top 75%', end: 'top 25%', scrub: 0.8 },
+        scrollTrigger: {
+          trigger: sec,
+          start: () => (mqMovil.matches ? inicioMovil(i) : 'top 75%'),
+          end: () => (mqMovil.matches ? finMovil(i) : 'top 25%'),
+          scrub: 0.8,
+        },
       })
     }
+    for (const st of ScrollTrigger.getAll()) disparadores.push(st)
     ScrollTrigger.refresh()
   }
 
@@ -676,6 +849,11 @@ export async function iniciar(stage: HTMLElement, opc: { reduce: boolean }): Pro
   requestAnimationFrame(() => {
     stage.classList.add('is3d')
     canvas.classList.add('is3d')
+    document.documentElement.classList.add('v3d') // antes de abrir huecos: desactiva el anclaje de scroll del navegador
+    if (movil) {
+      ventanas.abrir()
+      pedirRefresco()
+    }
   })
   if (hacerIntro) {
     gsap.set(canvas, { y: 26, scale: 0.97 })

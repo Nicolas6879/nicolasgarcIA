@@ -125,12 +125,23 @@ export function crearTerminal(host: HTMLElement, d: DatosNicos, g: Ganchos, opc:
   input.setAttribute('autocorrect', 'off')
   input.enterKeyHint = 'go'
   form.append(lbl, input)
-  el.append(log, form)
+  // Fichas de comandos (solo se ven en táctil/móvil): tocar una ejecuta el comando sin abrir el teclado.
+  const dock = document.createElement('div')
+  dock.className = 'nt-dock'
+  const fichas = document.createElement('div')
+  fichas.className = 'nt-chips'
+  fichas.setAttribute('role', 'group')
+  fichas.setAttribute('aria-label', t.toca)
+  const lista: [Cmd, 0 | 1][] = [['ayuda', 1], ['whoami', 1], ['proyectos', 1], ['cv', 1], ['contacto', 1], ['tema', 0], ['idioma', 0], ['sudo', 0]]
+  dock.append(span('nt-hint', t.toca + ' ↓'), fichas, form)
+  el.append(log, dock)
   host.append(el)
 
   const bajar = () => {
     el.scrollTop = el.scrollHeight
   }
+  // Al abrirse el teclado virtual el área visible se encoge: la línea de entrada se queda a la vista.
+  window.visualViewport?.addEventListener('resize', () => el.isConnected && bajar())
   const linea = (partes: Parte[], clase = '') => {
     const p = document.createElement('p')
     p.className = 'nt-l' + (clase ? ' ' + clase : '')
@@ -287,10 +298,7 @@ export function crearTerminal(host: HTMLElement, d: DatosNicos, g: Ganchos, opc:
     }
   })
 
-  form.addEventListener('submit', (ev) => {
-    ev.preventDefault()
-    const v = input.value
-    input.value = ''
+  const correr = (v: string) => {
     linea([span('nt-prompt', 'nico@nicos:~$'), ' ' + v])
     if (!v.trim()) return
     if (historial[historial.length - 1] !== v) historial.push(v)
@@ -298,11 +306,27 @@ export function crearTerminal(host: HTMLElement, d: DatosNicos, g: Ganchos, opc:
     borrador = ''
     ejecutar(v)
     bajar()
+  }
+  form.addEventListener('submit', (ev) => {
+    ev.preventDefault()
+    const v = input.value
+    input.value = ''
+    correr(v)
   })
+  for (const [k, mini] of lista) {
+    if (opc.compacta && !mini) continue
+    const b = document.createElement('button')
+    b.type = 'button'
+    b.className = 'nt-chip' + (k === 'sudo' ? ' nt-chip-x' : '')
+    const txt = k === 'sudo' ? `sudo ${i ? 'contratar' : 'hire'} nico` : nombreCmd(k)
+    b.textContent = txt
+    b.addEventListener('click', () => correr(txt))
+    fichas.append(b)
+  }
 
   // Clic en la terminal = foco en la entrada (sin romper la selección de texto ni los enlaces).
   el.addEventListener('click', (ev) => {
-    if ((ev.target as HTMLElement).closest('a')) return
+    if ((ev.target as HTMLElement).closest('a, .nt-chips')) return
     if (window.getSelection()?.isCollapsed === false) return
     input.focus({ preventScroll: true })
   })

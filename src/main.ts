@@ -52,7 +52,10 @@ const abrirNicos = (v: 'terminal' | 'leeme') => {
         if (enviar) input.form?.requestSubmit()
       }
     })
-    .catch(() => {})
+    .catch(() => {
+      // Sin red / chunk caído: se vuelve a intentar al tocar de nuevo; mientras, se enseña el bloque estático de contacto.
+      if (v === 'leeme') location.hash = 'contacto'
+    })
     .finally(() => {
       tecleado = null
       enviar = false
@@ -61,11 +64,11 @@ const abrirNicos = (v: 'terminal' | 'leeme') => {
 const btnNicos = document.getElementById('nicos-abrir')
 const mac = /Mac|iPhone|iPad/.test(navigator.platform)
 if (mac) document.querySelectorAll('.nicos-btn kbd, .foot kbd').forEach((k) => (k.textContent = '⌘K'))
-btnNicos?.addEventListener('click', () => abrirNicos('terminal'))
-btnNicos?.addEventListener('pointerenter', () => void cargarNicos().catch(() => {}), { once: true })
 const encender = document.getElementById('nicos-encender')
-encender?.addEventListener('click', () => abrirNicos('leeme'))
-encender?.addEventListener('pointerenter', () => void cargarNicos().catch(() => {}), { once: true })
+;([[btnNicos, 'terminal'], [encender, 'leeme']] as const).forEach(([b, v]) => {
+  b?.addEventListener('click', () => abrirNicos(v))
+  b?.addEventListener('pointerenter', () => void cargarNicos().catch(() => {}), { once: true })
+})
 window.addEventListener('keydown', (ev) => {
   if ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && ev.key.toLowerCase() === 'k') {
     ev.preventDefault()
@@ -127,7 +130,8 @@ if (hayIO) {
       for (const en of entries) {
         if (!en.isIntersecting) continue
         const s = en.target as HTMLElement
-        if (stage && s.dataset.pieza) stage.dataset.active = s.dataset.pieza
+        // En móvil con 3D la pose activa la decide la escena según el hueco más cercano.
+        if (stage && s.dataset.pieza && !(root.classList.contains('v3d') && !anchoMin.matches)) stage.dataset.active = s.dataset.pieza
         links.forEach((as, id) =>
           as.forEach((a) => {
             if (id === s.id) {
@@ -182,7 +186,8 @@ if (barra) {
   pintar()
 }
 
-// Portátil 3D: solo con escenario visible (>= 860px) y WebGL; después del primer pintado.
+// Portátil 3D: con WebGL y después del primer pintado. En escritorio (>= 860px) vive en el escenario; en móvil es el fondo de
+// la página y se omite con movimiento reducido, ahorro de datos, poca memoria o sin WebGL (queda la imagen estática).
 // Three, GSAP y Lenis viven en un chunk aparte; mientras tanto (o sin WebGL) queda el SVG.
 function hayWebGL(): boolean {
   try {
@@ -197,8 +202,13 @@ function hayWebGL(): boolean {
 }
 const anchoMin = window.matchMedia('(min-width: 860px)')
 let tresD = false
+function aptoMovil(): boolean {
+  if (anchoMin.matches) return true
+  const n = navigator as Navigator & { connection?: { saveData?: boolean }; deviceMemory?: number }
+  return !reduce && !n.connection?.saveData && !(n.deviceMemory !== undefined && n.deviceMemory <= 2)
+}
 function cargar3D() {
-  if (tresD || !stage || !anchoMin.matches || !hayWebGL()) return
+  if (tresD || !stage || !aptoMovil() || !hayWebGL()) return
   tresD = true
   const lanzar = () => import('./three/escena').then((m) => m.iniciar(stage, { reduce })).catch(() => { tresD = false })
   if ('requestIdleCallback' in window) requestIdleCallback(() => void lanzar(), { timeout: 2000 })
@@ -208,7 +218,7 @@ function cargar3D() {
 // interacción (mover, tocar, teclear, desplazarse) o, si la persona solo mira, a los 8 s de cargar. Mientras, el SVG.
 let armado = false
 function armar3D() {
-  if (armado || tresD || !stage || !anchoMin.matches) return
+  if (armado || tresD || !stage || !aptoMovil()) return
   armado = true
   const ev = ['pointermove', 'pointerdown', 'keydown', 'wheel', 'scroll', 'touchstart'] as const
   let t = 0
