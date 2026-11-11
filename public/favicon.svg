@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Ícono nicolasgarcIA: el portátil del sitio con un prompt, en el degradado de acento sobre grafito -->
+  <defs>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="8" y1="12" x2="56" y2="50">
+      <stop offset="0" stop-color="#FF7A45"/>
+      <stop offset="1" stop-color="#FF3D7F"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#161B26"/>
+  <rect x="13" y="15" width="38" height="25" rx="3" fill="none" stroke="url(#g)" stroke-width="4"/>
+  <path d="M7 47h50" stroke="url(#g)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M21 23l5 4.5-5 4.5" fill="none" stroke="#D7DCE4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M30 32h9" stroke="#D7DCE4" stroke-width="3" stroke-linecap="round"/>
+</svg>
